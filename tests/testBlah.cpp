@@ -15,6 +15,42 @@ double getClockMonotonic()
     return double( tNow.tv_sec ) + double( tNow.tv_nsec ) / 1e9;
 }
 
+class RunningStatsMachine
+{
+public:
+
+};
+
+double deltaAngle( double angleA, double angleB )
+{
+    auto delta = angleB - angleA;
+    if ( delta > M_PI ) delta -= 2*M_PI;
+    else if ( delta < -M_PI ) delta += 2*M_PI;
+//    delta += ( delta > M_PI ) ? -2*M_PI : ( delta < -M_PI ) ? 2*M_PI : 0;
+    return delta;
+}
+
+int analyzeSeries( const ComplexToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples, double radiansPerSecond, double phi )
+{
+    int retCode = 0;
+
+    for ( size_t n=0; nSamples != n; ++n )
+    {
+        if ( n != 0 )
+        {
+            auto phaseA = std::arg( pBuf[ n-1 ] );
+            auto phaseB = std::arg( pBuf[ n ] );
+            double phaseDelta = deltaAngle( phaseA, phaseB );
+
+            std::cout << "phaseA = " << phaseA << ", phaseB = " << phaseB
+               << ", phaseDelta = " << phaseDelta << std::endl;
+        }
+
+//        if ( 20 == n ) break;
+    }
+
+    return retCode;
+}
 
 
 int main()
@@ -22,9 +58,10 @@ int main()
     std::cout << "Hello TSG Complex Tone Generator" << std::endl;
 
     // Instantiate the ComplexToneGen
-//    std::unique_ptr< ComplexToneGenerator > pComplexToneGen{ new ComplexToneGenerator{ M_PI_4, 0.0 } };
-    constexpr double radiansPerSample = 0.7;
-    std::unique_ptr< ComplexToneGenerator > pComplexToneGen{ new ComplexToneGenerator{ radiansPerSample, 0.0 } };
+//    constexpr double radiansPerSample = M_PI_2;
+    double radiansPerSample = 1.0;
+    double phi = 0.0;
+    std::unique_ptr< ComplexToneGenerator > pComplexToneGen{ new ComplexToneGenerator{ radiansPerSample, phi } };
 
     // Create buffers for a larger than needed number of samples
     const size_t maxSamples = 8192;
@@ -54,20 +91,6 @@ int main()
     }
 #endif
 
-#if 0
-    // Get samples a bunch more times to find out if this thing ever breaks
-    for ( size_t epoch = 0; 3000 != epoch; ++epoch )
-    {
-        pComplexToneGen->getSamples( numSamples, p );
-    }
-    for (size_t n = 0; numSamples != n; ++n )
-    {
-        ComplexToneGenerator::ElementType & s = p[n];
-        std::cout << "n: " << n << ", x: " << real(s) << ", y: " << imag(s)
-                  << ", mag: " << abs(s) << ", phase: " << arg(s) << std::endl;
-    }
-#endif
-
     // New, Old-Fashioned Way.
     // Loop on complex exponential
     constexpr ComplexToneGenerator::ElementType j{ 0.0, 1.0 };
@@ -90,21 +113,44 @@ int main()
     }
 #endif
 
-//n: 4095, x: 2.01898937688913371e-01, y: 9.79406360485824190e-01, mag: 9.99999999999999889e-01, phase: 1.36749992610856652e+00
+// New Generator Re-normalizing every 4th sample
+//n: 4095, x: -6.59759965582308316e-02, y: -9.97821210376963585e-01, mag: 1.00000000000000000e+00, phase: -1.63682028109054922e+00
+
     int retCode = 0;
 
+#if 0
     // ***** Phase Noise Work *****
     std::unique_ptr< ComplexToneGenerator::PrecisionType[] > pDeltaPhaseSeries{ new ComplexToneGenerator::PrecisionType [ maxSamples ] };
     for ( size_t n = 0; numSamples != n; ++n )
     {
         double phaseA = std::arg( pCmplxExpSeries[n] );
         double phaseB = std::arg( pToneGenSeries[n] );
-        pDeltaPhaseSeries[n] = ( phaseA + M_PI ) - (phaseB + M_PI );
+        double deltaPhase = phaseA - phaseB;
+        if ( deltaPhase > M_PI ) deltaPhase -= 2 * M_PI;
+        if ( deltaPhase <=  -M_PI ) deltaPhase += 2 * M_PI;
+        pDeltaPhaseSeries[n] = deltaPhase;
         std::cout << "n: " << n << ", deltaPhase: " << pDeltaPhaseSeries[n] << std::endl;
     }
     // It does not seem practical to run statistical analysis on this as the mean is low and the variance is low.
     // That leads to instability using numerical methods.
+#endif
 
+#if 0
+    // Get samples a bunch more times to find out if this thing ever breaks
+    for ( size_t epoch = 0; 3000 != epoch; ++epoch )
+    {
+        pComplexToneGen->getSamples( numSamples, p );
+    }
+    for (size_t n = 0; numSamples != n; ++n )
+    {
+        ComplexToneGenerator::ElementType & s = p[n];
+        std::cout << "n: " << n << ", x: " << real(s) << ", y: " << imag(s)
+                  << ", mag: " << abs(s) << ", phase: " << arg(s) << std::endl;
+    }
+#endif
+
+    analyzeSeries( pCmplxExpSeries.get(), numSamples, radiansPerSample, phi );
+//    analyzeSeries( pToneGenSeries.get(), numSamples, radiansPerSample, phi );
 
     exit( retCode );
     return retCode;
