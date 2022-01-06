@@ -15,6 +15,7 @@ private:
 #else
         : rate{ std::cos( theRadiansPerSample ), std::sin( theRadiansPerSample ) }
         , phasor{ ElementType{ 1.0, 0.0 } * std::polar( 1.0, phi ) }
+        , sampleCounter{}
 #endif
     {
     }
@@ -31,9 +32,19 @@ private:
             // Now advance the phasor by our rate.
             phasor *= rate;
 
+#if 0
             // Re-normalize each iteration. It may be unnecessary but, it is cheap enough.
             const double d = 1.0 - ( phasor.real()*phasor.real() + phasor.imag()*phasor.imag() - 1.0 ) / 2.0;
             phasor *= d;
+#else
+            // Re-normalize every N iterations.
+            if ( ( ++sampleCounter % 4 ) == 0 )
+            {
+                const double d = 1.0 - ( phasor.real()*phasor.real() + phasor.imag()*phasor.imag() - 1.0 ) / 2.0;
+                phasor *= d;
+
+            }
+#endif
         }
     }
 
@@ -41,8 +52,9 @@ private:
     double dx;
     double dy;
 #else
-    ElementType rate;
+    const ElementType rate;
     ElementType phasor;
+    size_t sampleCounter;
 #endif
 };
 
