@@ -1,0 +1,34 @@
+# -------------------
+#
+# TSG_ComplexToneGen cmake module.
+# This module sets the following variables in your project:
+#
+#   TSG_ComplexToneGen_FOUND - true if TSG_Random found on the system
+#   TSG_ComplexToneGen_VERSION - TSG_ComplexToneGen version in format Major.Minor.Release
+#
+#
+# Exported targets:
+#
+# If TSG_ComplexToneGen is found, this module defines the following :prop_tgt:`IMPORTED`
+# targets. ::
+#   TSG_ComplexToneGen::TSG_ComplexToneGen - the shared library with header & defs attached.
+#
+#
+# Suggested usage:
+#
+#   find_package(TSG_ComplexToneGen)
+#   find_package(TSG_ComplexToneGen 1.0 CONFIG REQUIRED)
+#
+#
+# The following variables can be set to guide the search for this package:
+#
+#   TSG_ComplexToneGen_DIR - CMake variable, set to directory containing this Config file
+#   CMAKE_PREFIX_PATH - CMake variable, set to root directory of this package
+#   PATH - environment variable, set to bin directory of this package
+#   CMAKE_DISABLE_FIND_PACKAGE_TSG_ComplexToneGen - CMake variable, disables
+#       find_package(TSG_ComplexToneGen) perhaps to force internal build
+
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/TSG_ComplexToneGenTargets.cmake")
+check_required_components( "TSG_ComplexToneGen" )
