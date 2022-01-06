@@ -13,11 +13,12 @@ private:
     class Imple;
 
 public:
+    using PrecisionType = double;
+    using ElementType = std::complex< PrecisionType >;
+    using ElementBufferTypePtr = ElementType *;
+
     explicit ComplexToneGenerator( double radiansPerSample, double phi );
     ~ComplexToneGenerator();
-
-    using ElementType = std::complex< double >;
-    using ElementBufferTypePtr = ElementType *;
 
     void getSamples( size_t numSamples, ElementBufferTypePtr pElementBufferType );
 private:

@@ -26,10 +26,10 @@ int main()
     constexpr double radiansPerSample = 0.7;
     std::unique_ptr< ComplexToneGenerator > pComplexToneGen{ new ComplexToneGenerator{ radiansPerSample, 0.0 } };
 
-    // Create a buffer for a larger than needed number of samples
+    // Create buffers for a larger than needed number of samples
     const size_t maxSamples = 8192;
-    std::unique_ptr< ComplexToneGenerator::ElementType > pToneGenSeries{new ComplexToneGenerator::ElementType [ maxSamples] };
-    std::unique_ptr< ComplexToneGenerator::ElementType > pCmplxExpSeries{new ComplexToneGenerator::ElementType [ maxSamples] };
+    std::unique_ptr< ComplexToneGenerator::ElementType[] > pToneGenSeries{new ComplexToneGenerator::ElementType [ maxSamples] };
+    std::unique_ptr< ComplexToneGenerator::ElementType[] > pCmplxExpSeries{new ComplexToneGenerator::ElementType [ maxSamples] };
 
     std::cout << std::scientific;
     std::cout.precision(17);
@@ -44,7 +44,7 @@ int main()
     std::cout << "New Generator Performance for numSamples: " << numSamples
         << " is " << t1-t0 << " seconds." << std::endl;
 
-#if 1
+#if 0
     // What did we get
     for (size_t n = 0; numSamples != n; ++n )
     {
@@ -93,6 +93,17 @@ int main()
 //n: 4095, x: 2.01898937688913371e-01, y: 9.79406360485824190e-01, mag: 9.99999999999999889e-01, phase: 1.36749992610856652e+00
     int retCode = 0;
 
+    // ***** Phase Noise Work *****
+    std::unique_ptr< ComplexToneGenerator::PrecisionType[] > pDeltaPhaseSeries{ new ComplexToneGenerator::PrecisionType [ maxSamples ] };
+    for ( size_t n = 0; numSamples != n; ++n )
+    {
+        double phaseA = std::arg( pCmplxExpSeries[n] );
+        double phaseB = std::arg( pToneGenSeries[n] );
+        pDeltaPhaseSeries[n] = ( phaseA + M_PI ) - (phaseB + M_PI );
+        std::cout << "n: " << n << ", deltaPhase: " << pDeltaPhaseSeries[n] << std::endl;
+    }
+    // It does not seem practical to run statistical analysis on this as the mean is low and the variance is low.
+    // That leads to instability using numerical methods.
 
 
     exit( retCode );
