@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 #include <cmath>
+#include <limits>
 
 #include <ctime>
 double getClockMonotonic()
@@ -15,10 +16,38 @@ double getClockMonotonic()
     return double( tNow.tv_sec ) + double( tNow.tv_nsec ) / 1e9;
 }
 
-class RunningStatsMachine
+// Performs "Running/Online" statistics accumulation.
+// Implements the Welford's "Online" in a state machine.
+// This algorithm is much less prone to loss of precision due to catastrophic cancellation.
+// Additionally, it uses "long double" format for mathematics and state to better compute
+// variance from small deviations in the input train.
+class StatsStateMachine
 {
 public:
+    void addSample( double value )
+    {
+        long double delta = value - mean;
+        ++nSamples;
+        mean += delta / (long double)( nSamples );
+        M2 += delta * ( value - mean );
+    }
 
+    // Currently, returns mean and variance
+    std::pair<double,double> getStats() const
+    {
+        constexpr long double myNAN = std::numeric_limits<long double>::quiet_NaN();
+        switch ( nSamples )
+        {
+            case 0 : return { myNAN, myNAN };
+            case 1 : return { mean, myNAN };
+            default : return { mean, M2 / (long double)(nSamples-1) };
+        }
+    }
+
+private:
+    long double mean{0.0};
+    long double M2{0.0};
+    size_t nSamples{0};
 };
 
 double deltaAngle( double angleA, double angleB )
@@ -30,24 +59,35 @@ double deltaAngle( double angleA, double angleB )
     return delta;
 }
 
-int analyzeSeries( const ComplexToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples, double radiansPerSecond, double phi )
+///@todo Not using all the arguments.
+int analyzeSeries( const ComplexToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples,
+                   double radiansPerSecond, double phi )
 {
+    StatsStateMachine rateStatsMachine{};
+    StatsStateMachine magStatsMachine{};
     int retCode = 0;
 
-    for ( size_t n=0; nSamples != n; ++n )
+    for ( size_t n=1; nSamples != n; ++n )
     {
-        if ( n != 0 )
-        {
-            auto phaseA = std::arg( pBuf[ n-1 ] );
-            auto phaseB = std::arg( pBuf[ n ] );
-            double phaseDelta = deltaAngle( phaseA, phaseB );
+        auto phaseA = std::arg( pBuf[ n-1 ] );
+        auto phaseB = std::arg( pBuf[ n ] );
+        double phaseDelta = deltaAngle( phaseA, phaseB );
 
-            std::cout << "phaseA = " << phaseA << ", phaseB = " << phaseB
-               << ", phaseDelta = " << phaseDelta << std::endl;
-        }
+//        std::cout << "phaseA = " << phaseA << ", phaseB = " << phaseB
+//            << ", phaseDelta = " << phaseDelta << std::endl;
+        rateStatsMachine.addSample(phaseDelta );
 
 //        if ( 20 == n ) break;
     }
+    for ( size_t n=0; nSamples != n; ++n )
+    {
+        magStatsMachine.addSample( std::abs( pBuf[ n ] ) );
+    }
+
+    auto rateStats = rateStatsMachine.getStats();
+    std::cout << "Mean Angular Rate: " << rateStats.first << ", Variance: " << rateStats.second << std::endl;
+    auto magStats = magStatsMachine.getStats();
+    std::cout << "Mean Magnitude: " << magStats.first << ", Variance: " << magStats.second << std::endl;
 
     return retCode;
 }
@@ -81,6 +121,7 @@ int main()
     std::cout << "New Generator Performance for numSamples: " << numSamples
         << " is " << t1-t0 << " seconds." << std::endl;
 
+    analyzeSeries( pToneGenSeries.get(), numSamples, radiansPerSample, phi );
 #if 0
     // What did we get
     for (size_t n = 0; numSamples != n; ++n )
@@ -112,6 +153,8 @@ int main()
                   << ", mag: " << abs(s) << ", phase: " << arg(s) << std::endl;
     }
 #endif
+
+    analyzeSeries( pCmplxExpSeries.get(), numSamples, radiansPerSample, phi );
 
 // New Generator Re-normalizing every 4th sample
 //n: 4095, x: -6.59759965582308316e-02, y: -9.97821210376963585e-01, mag: 1.00000000000000000e+00, phase: -1.63682028109054922e+00
@@ -149,8 +192,18 @@ int main()
     }
 #endif
 
-    analyzeSeries( pCmplxExpSeries.get(), numSamples, radiansPerSample, phi );
-//    analyzeSeries( pToneGenSeries.get(), numSamples, radiansPerSample, phi );
+#if 0
+    StatsStateMachine blah{};
+    blah.addSample( 3 );
+    blah.addSample( 4 );
+    blah.addSample( 3 );
+    blah.addSample( 5 );
+    blah.addSample( 3 );
+    blah.addSample( 4 );
+    blah.addSample( 5 );
+    auto res = blah.getStats();
+    std::cout << "Blah: mean=" << res.first << ", variance=" << res.second << std::endl;
+#endif
 
     exit( retCode );
     return retCode;

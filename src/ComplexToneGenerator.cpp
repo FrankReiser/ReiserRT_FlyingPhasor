@@ -7,16 +7,22 @@ class ComplexToneGenerator::Imple
 private:
     friend class ComplexToneGenerator;
 
+    /**
+     * Constructor for ComplexToneGenerator::Imple
+     *
+     * We store the radians per sample argument in rectangular form as a unit vector.
+     * This stores how much the tracked "phasor" is rotated each sample.
+     * We also initialize our phasor as a unit vector rotated from 0 by
+     * phi radians. This phasor gets updated each sample delivered with
+     * the getSamples operation.
+     *
+     * @param theRadiansPerSample How many radians to rotate per sample
+     * @param phi The initial phase angle offset.
+     */
     Imple( double theRadiansPerSample, double phi )
-#if 0
-        : dx{ std::cos( theRadiansPerSample ) }
-        , dy{ std::sin( theRadiansPerSample ) }
-        , sampleCounter{}
-#else
-        : rate{ std::cos( theRadiansPerSample ), std::sin( theRadiansPerSample ) }
+        : rate{ std::polar( 1.0, theRadiansPerSample ) }
         , phasor{ ElementType{ 1.0, 0.0 } * std::polar( 1.0, phi ) }
         , sampleCounter{}
-#endif
     {
     }
 
@@ -26,25 +32,27 @@ private:
     {
         for ( size_t i = 0; numSamples != i; ++i )
         {
-            // We always start with the current phasor to nail the very first sample (s0).
+            // We always start with the current phasor to nail the very first sample (s0)
+            // and advance (rotate) afterwards.
             *pElementBufferType++ = phasor;
 
-            // Now advance the phasor by our rate.
+            // Now advance (rotate) the phasor by our rate (complex multiply)
             phasor *= rate;
 
-#if 0
-            // Re-normalize each iteration. It may be unnecessary but, it is cheap enough.
-            const double d = 1.0 - ( phasor.real()*phasor.real() + phasor.imag()*phasor.imag() - 1.0 ) / 2.0;
-            phasor *= d;
-#else
-            // Re-normalize every N iterations.
-            if ( ( ++sampleCounter % 4 ) == 0 )
+            // Re-normalize every N iterations to ensure we maintain a unit vector
+            // as rounding errors accumulate. Doing this too often reduces computational performance
+            // and not doing it often enough increases noise (phase and amplitude).
+            // We are being pretty aggressive as it is at every 2 iterations.
+//            if ( ( ++sampleCounter % 4 ) == 0 )
+            if ( ( sampleCounter++ & 0x1 ) == 0x1 ) // Super-fast modulo 2.
             {
+                // Normally, this would require a sqrt invocation. However, when the sum of squares
+                // is near a value of 1, the square root would also be near 1.
+                // This is a first order Taylor Series approximation around 1 for the sqrt function.
+                // The adjustment is a scalar multiply.
                 const double d = 1.0 - ( phasor.real()*phasor.real() + phasor.imag()*phasor.imag() - 1.0 ) / 2.0;
                 phasor *= d;
-
             }
-#endif
         }
     }
 
