@@ -2,12 +2,15 @@
 
 #include "ComplexToneGenerator.h"
 
+#include "CommandLineParser.h"
+
 #include <iostream>
 #include <memory>
 #include <cmath>
 #include <limits>
 
 #include <ctime>
+
 double getClockMonotonic()
 {
     timespec tNow = { 0, 0 };
@@ -175,14 +178,32 @@ int analyzeSinusoidMagnitudeStability(const ComplexToneGenerator::ElementBufferT
     return retCode;
 }
 
-int main()
+int main( int argc, char * argv[])
 {
     std::cout << "Hello TSG Complex Tone Generator" << std::endl;
 
+    CommandLineParser cmdLineParser{};
+    if ( 0 != cmdLineParser.parseCommandLine(argc, argv) )
+    {
+        std::cout << "Failed parsing command line" << std::endl;
+        std::cout << "Optional Arguments are:" << std::endl;
+        std::cout << "\t--radsPerSample=<double>: The radians per sample to used." << std::endl;
+        std::cout << "\t--phase=<double>: The initial phase in radians." << std::endl;
+
+        exit( -1 );
+    }
+#if 1
+    else
+    {
+        std::cout << "Parsed: --radiansPerSample=" << cmdLineParser.getRadsPerSample()
+            << " --phase=" << cmdLineParser.getPhase() << std::endl << std::endl;
+    }
+#endif
+
     // Instantiate the ComplexToneGen
 //    constexpr double radiansPerSample = M_PI_2;
-    double radiansPerSample = 1.0;
-    double phi = 0.0;
+    double radiansPerSample = cmdLineParser.getRadsPerSample();
+    double phi = cmdLineParser.getPhase();
     std::unique_ptr< ComplexToneGenerator > pComplexToneGen{ new ComplexToneGenerator{ radiansPerSample, phi } };
 
     // Create buffers for a larger than needed number of samples
