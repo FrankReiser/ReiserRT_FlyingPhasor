@@ -49,7 +49,7 @@ private:
                 // Normally, this would require a sqrt invocation. However, when the sum of squares
                 // is near a value of 1, the square root would also be near 1.
                 // This is a first order Taylor Series approximation around 1 for the sqrt function.
-                // The adjustment is a scalar multiply (not complex multiply).
+                // The re-normalization adjustment is a scalar multiply (not complex multiply).
                 const double d = 1.0 - ( phasor.real()*phasor.real() + phasor.imag()*phasor.imag() - 1.0 ) / 2.0;
                 phasor *= d;
             }
