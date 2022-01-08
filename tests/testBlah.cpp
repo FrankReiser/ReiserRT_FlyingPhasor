@@ -20,7 +20,7 @@ double getClockMonotonic()
 }
 
 // Performs "Running/Online" statistics accumulation.
-// Implements the Welford's "Online" in a state machine.
+// Implements the Welford's "Online" in a state machine plus additional statistics.
 // This algorithm is much less prone to loss of precision due to catastrophic cancellation.
 // Additionally, it uses "long double" format for mathematics and state to better compute
 // variance from small deviations in the input train.
@@ -29,6 +29,8 @@ class StatsStateMachine
 public:
     void addSample( double value )
     {
+        if ( value < min ) min = value;
+        if ( value > max ) max = value;
         long double delta = value - mean;
         ++nSamples;
         mean += delta / (long double)( nSamples );
@@ -36,7 +38,7 @@ public:
     }
 
     // Currently, returns mean and variance
-    std::pair<double,double> getStats() const
+    std::pair<double, double> getStats() const
     {
         constexpr long double myNAN = std::numeric_limits<long double>::quiet_NaN();
         switch ( nSamples )
@@ -46,11 +48,16 @@ public:
             default : return { mean, M2 / (long double)(nSamples-1) };
         }
     }
+    std::pair<double, double> getPopcorn() const { return {min,max}; }
 
-    void reset() { mean=0.0; M2=0.0; nSamples=0; }
+    void reset() { mean=0.0; M2=0.0; min=0.0, max=0.0; nSamples=0; }
+
+
 private:
     long double mean{0.0};
     long double M2{0.0};
+    double max{std::numeric_limits< double >::max()};
+    double min{-max};
     size_t nSamples{0};
 };
 
@@ -74,7 +81,7 @@ public:
         return delta;
     }
 
-    int analyzeSinusoidPhaseStability(const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples,
+    int analyzeSinusoidPhaseStability( const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples,
                                       double radiansPerSample, double phi )
     {
         int retCode = 0;
@@ -84,6 +91,7 @@ public:
 
         for ( size_t n=0; nSamples != n; ++n )
         {
+            ///@todo Make initialization a separate test that we run so we can remove it from here.
             // If n is zero, then we merely want to ensure that our first phase is approximately equivalent
             // to argument "phi". If not, this is an obvious failure.
             if ( 0 == n )
@@ -146,7 +154,7 @@ private:
 class MagPurityAnalyzer
 {
 public:
-    int analyzeSinusoidMagnitudeStability(const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples )
+    int analyzeSinusoidMagnitudeStability( const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples )
     {
         int retCode = 0;
 
@@ -225,12 +233,12 @@ int main( int argc, char * argv[])
     std::cout << std::scientific;
     std::cout.precision(17);
 
-    // Create buffers for a number of samples
+    // Create buffers for a number of samples for both the legacy and "Flying Phasor" generators.
     const size_t maxSamples = 8192;
-    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pFlyingPhasorToneGenSeries{new FlyingPhasorToneGenerator::ElementType [ maxSamples] };
     std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pLegacyToneSeries{new FlyingPhasorToneGenerator::ElementType [ maxSamples] };
+    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pFlyingPhasorToneGenSeries{new FlyingPhasorToneGenerator::ElementType [ maxSamples] };
 
-    // Instantiate the FlyingPhasorToneGenerator. This is what we are testing.
+    // Instantiate the FlyingPhasorToneGenerator. This is what we are testing the purity of as compared to legacy methods.
     std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, phi } };
 
     // Phase and Magnitude Purity Analyzers for each "FlyingPhasor" and "Legacy" tone generators.

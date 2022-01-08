@@ -13,8 +13,8 @@ set( _privateSources
         FlyingPhasorToneGenerator.cpp
         )
 
-add_library( TSG_ComplexToneGen SHARED "" )
-target_sources( TSG_ComplexToneGen
+add_library( TSG_FlyingPhasorToneGen SHARED "" )
+target_sources( TSG_FlyingPhasorToneGen
         PRIVATE
         ${_privateSources}
         #            ${_privateHeaders}
@@ -22,7 +22,7 @@ target_sources( TSG_ComplexToneGen
         #            ${_publicHeaders}
         )
 
-set_target_properties( TSG_ComplexToneGen
+set_target_properties( TSG_FlyingPhasorToneGen
         PROPERTIES
         POSITION_INDEPENDENT_CODE 1
         CXX_VISIBILITY_PRESET hidden
@@ -30,33 +30,33 @@ set_target_properties( TSG_ComplexToneGen
         VERSION ${PROJECT_VERSION}
         SOVERSION ${PROJECT_VERSION_MAJOR}
         DEBUG_POSTFIX "_d"
-        PUBLIC_HEADER "${_publicHeaders};${CMAKE_BINARY_DIR}/${INSTALL_INCLUDEDIR}/TSG_ComplexToneGenExport.h"
+        PUBLIC_HEADER "${_publicHeaders};${CMAKE_BINARY_DIR}/${INSTALL_INCLUDEDIR}/TSG_FlyingPhasorToneGenExport.h"
         )
 
 # Specify our target interfaces for external clients
-target_include_directories( TSG_ComplexToneGen
+target_include_directories( TSG_FlyingPhasorToneGen
         PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_BINARY_DIR}/${INSTALL_INCLUDEDIR}>"
         "$<INSTALL_INTERFACE:${INSTALL_INCLUDEDIR}>"
         )
 
 include(GenerateExportHeader)
-generate_export_header( TSG_ComplexToneGen
-        BASE_NAME "TSG_ComplexToneGen"
-        EXPORT_MACRO_NAME "TSG_ComplexToneGen_EXPORT"
-        EXPORT_FILE_NAME "${CMAKE_BINARY_DIR}/${INSTALL_INCLUDEDIR}/TSG_ComplexToneGenExport.h"
-        DEPRECATED_MACRO_NAME "TSG_ComplexToneGen_DEPRECATED"
-        NO_EXPORT_MACRO_NAME "TSG_ComplexToneGen_NO_EXPORT"
-        STATIC_DEFINE "TSG_ComplexToneGen_STATIC_DEFINE"
-        NO_DEPRECATED_MACRO_NAME "TSG_ComplexToneGen_NO_DEPRECATED"
+generate_export_header( TSG_FlyingPhasorToneGen
+        BASE_NAME "TSG_FlyingPhasorToneGen"
+        EXPORT_MACRO_NAME "TSG_FlyingPhasorToneGen_EXPORT"
+        EXPORT_FILE_NAME "${CMAKE_BINARY_DIR}/${INSTALL_INCLUDEDIR}/TSG_FlyingPhasorToneGenExport.h"
+        DEPRECATED_MACRO_NAME "TSG_FlyingPhasorToneGen_DEPRECATED"
+        NO_EXPORT_MACRO_NAME "TSG_FlyingPhasorToneGen_NO_EXPORT"
+        STATIC_DEFINE "TSG_FlyingPhasorToneGen_STATIC_DEFINE"
+        NO_DEPRECATED_MACRO_NAME "TSG_FlyingPhasorToneGen_NO_DEPRECATED"
         DEFINE_NO_DEPRECATED
         )
 
 install(
         TARGETS
-        TSG_ComplexToneGen
+        TSG_FlyingPhasorToneGen
         EXPORT
-        TSG_ComplexToneGenTargets
+        TSG_FlyingPhasorToneGenTargets
         ARCHIVE
         DESTINATION ${INSTALL_LIBDIR}
         COMPONENT lib
@@ -73,9 +73,9 @@ install(
 
 install (
         EXPORT
-        TSG_ComplexToneGenTargets
+        TSG_FlyingPhasorToneGenTargets
         NAMESPACE
-        "TSG_ComplexToneGen::"
+        "TSG_FlyingPhasorToneGen::"
         DESTINATION
         ${INSTALL_CMAKEDIR}
         COMPONENT
@@ -84,20 +84,20 @@ install (
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-        ${CMAKE_CURRENT_BINARY_DIR}/TSG_ComplexToneGenConfigVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/TSG_FlyingPhasorToneGenConfigVersion.cmake
         VERSION ${PROJECT_VERSION}
         COMPATIBILITY SameMajorVersion
 )
 configure_package_config_file(
-        ${PROJECT_SOURCE_DIR}/cmake/TSG_ComplexToneGenConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/TSG_ComplexToneGenConfig.cmake
+        ${PROJECT_SOURCE_DIR}/cmake/TSG_FlyingPhasorToneGenConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/TSG_FlyingPhasorToneGenConfig.cmake
         INSTALL_DESTINATION ${INSTALL_CMAKEDIR}
 )
 
 install(
         FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/TSG_ComplexToneGenConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/TSG_ComplexToneGenVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/TSG_FlyingPhasorToneGenConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/TSG_FlyingPhasorToneGenVersion.cmake
         DESTINATION
         ${INSTALL_CMAKEDIR}
 )

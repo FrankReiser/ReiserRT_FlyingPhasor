@@ -56,14 +56,9 @@ private:
         }
     }
 
-#if 0
-    double dx;
-    double dy;
-#else
     const ElementType rate;
     ElementType phasor;
     size_t sampleCounter;
-#endif
 };
 
 FlyingPhasorToneGenerator::FlyingPhasorToneGenerator( double radiansPerSample, double phi )
