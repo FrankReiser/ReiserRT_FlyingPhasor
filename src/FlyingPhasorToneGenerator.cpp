@@ -56,7 +56,14 @@ private:
         }
     }
 
-    const ElementType rate;
+    void reset( double radiansPerSample, double phi )
+    {
+        rate = std::polar( 1.0, radiansPerSample );
+        phasor = ElementType{ 1.0, 0.0 } * std::polar( 1.0, phi );
+        sampleCounter = 0;
+    }
+
+    ElementType rate;
     ElementType phasor;
     size_t sampleCounter;
 };
@@ -74,4 +81,9 @@ FlyingPhasorToneGenerator::~FlyingPhasorToneGenerator()
 void FlyingPhasorToneGenerator::getSamples( size_t numSamples, ElementBufferTypePtr pElementBufferType )
 {
     pImple->getSamples( numSamples, pElementBufferType );
+}
+
+void FlyingPhasorToneGenerator::reset( double radiansPerSample, double phi )
+{
+    pImple->reset( radiansPerSample, phi );
 }
