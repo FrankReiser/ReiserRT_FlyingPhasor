@@ -3,6 +3,7 @@
 #include "FlyingPhasorToneGenerator.h"
 
 #include "CommandLineParser.h"
+#include "MiscTestUtilities.h"
 
 #include <iostream>
 #include <memory>
@@ -61,25 +62,9 @@ private:
     size_t nSamples{0};
 };
 
-bool inTolerance( double value, double desiredValue, double toleranceRatio )
-{
-    auto minValue = desiredValue * ( 1 - toleranceRatio );
-    auto maxValue = desiredValue * ( 1 + toleranceRatio );
-
-    return ( minValue <= value && value <= maxValue );
-}
-
 class PhasePurityAnalyzer
 {
 public:
-
-    static double deltaAngle( double angleA, double angleB )
-    {
-        auto delta = angleB - angleA;
-        if ( delta > M_PI ) delta -= 2*M_PI;
-        else if ( delta < -M_PI ) delta += 2*M_PI;
-        return delta;
-    }
 
     int analyzeSinusoidPhaseStability( const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples,
                                       double radiansPerSample, double phi )
@@ -204,10 +189,8 @@ private:
     StatsStateMachine statsStateMachine{};
 };
 
-int main( int argc, char * argv[])
+int main( int argc, char * argv[] )
 {
-    std::cout << "Hello TSG Complex Tone Generator" << std::endl;
-
     // Parse potential command line. Defaults provided otherwise.
     CommandLineParser cmdLineParser{};
     if ( 0 != cmdLineParser.parseCommandLine(argc, argv) )
@@ -276,6 +259,8 @@ int main( int argc, char * argv[])
 
     legacyPhasePurityAnalyzer.analyzeSinusoidPhaseStability(pLegacyToneSeries.get(), numSamples, radiansPerSample, phi );
     legacyMagPurityAnalyzer.analyzeSinusoidMagnitudeStability(pLegacyToneSeries.get(), numSamples );
+
+
     t0 = getClockMonotonic();
     p = pFlyingPhasorToneGenSeries.get();
     pFlyingPhasorToneGen->getSamples(numSamples, p );

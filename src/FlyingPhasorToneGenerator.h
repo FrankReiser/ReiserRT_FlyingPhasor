@@ -11,12 +11,12 @@
  * Class FlyingPhasorToneGenerator
  *
  * This was developed to replace multiple invocations to cos( theta ) + j*sin( theta ),
- * or alternatively exp( j*theta ), with updated value for theta each sample of every
+ * or alternatively exp( j*theta ), with an updated value for theta each sample of every
  * complex sinusoid needed (many). All we really require is that the phase advance (or retard)
  * by some radian per sample quantity. We can advance phase by complex multiplication
  * of two unit vectors. The only trig functions necessary are one each of cos and sin
  * to initialize the complex "rate" member variable and another pair to initialize
- * the complex "phasor" from phi. These occurs during construction.
+ * the complex "phasor" from phi. These occur during construction or reset and never again.
  *
  * FlyingPhasorToneGenerator maintains state. You can ask for a quantity of samples
  * and come back later and ask for more and the waveform will pick up right where
@@ -25,7 +25,8 @@
  *
  * Being that you construct with a radian rate per sample and an phase angle (phi).
  * You would want to construct separate instances of FlyingPhasorToneGenerator for each
- * tone/phase you require. State data is minimal so this should not be a problem.
+ * tone/phase you require. State data is minimal so this should not be a problem
+ * (i.o.w., cheap).
  *
  * NOTE: Testing indicates that this is >10x faster than traditional means
  * for generating complex sinusoidal waveforms under "release" builds.

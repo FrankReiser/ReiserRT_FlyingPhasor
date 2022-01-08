@@ -1,3 +1,9 @@
+add_executable( testInitialization "" )
+target_sources( testInitialization PRIVATE testInitialization.cpp )
+target_include_directories( testInitialization PUBLIC ../src ../testUtilities )
+target_link_libraries( testInitialization TSG_FlyingPhasorToneGen TestUtilities )
+add_test( NAME runInitializationTest COMMAND $<TARGET_FILE:testInitialization> --radsPerSample=2.0 --phase=1.5 )
+
 add_executable( testPurity "" )
 target_sources( testPurity PRIVATE testPurity.cpp)
 target_include_directories( testPurity PUBLIC ../src ../testUtilities )

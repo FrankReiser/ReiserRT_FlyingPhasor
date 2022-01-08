@@ -43,6 +43,9 @@ private:
             // as rounding errors accumulate. Doing this too often reduces computational performance
             // and not doing it often enough increases noise (phase and amplitude).
             // We are being pretty aggressive as it is at every 2 iterations.
+            // Although, every two iterations pushes any slight modulation to the nyquist limit.
+            // This means that any spectral spurs created are at the nyquist and of
+            // thereby of less consequence.
             // Super-fast modulo 2 (for 4, 8, 16..., use 0x3, 0x7, 0xF...)
             if ( ( sampleCounter++ & 0x1 ) == 0x1 )
             {
