@@ -43,13 +43,13 @@ private:
             // as rounding errors accumulate. Doing this too often reduces computational performance
             // and not doing it often enough increases noise (phase and amplitude).
             // We are being pretty aggressive as it is at every 2 iterations.
-//            if ( ( ++sampleCounter % 4 ) == 0 )
-            if ( ( sampleCounter++ & 0x1 ) == 0x1 ) // Super-fast modulo 2.
+            // Super-fast modulo 2 (for 4, 8, 16..., use 0x3, 0x7, 0xF...)
+            if ( ( sampleCounter++ & 0x1 ) == 0x1 )
             {
                 // Normally, this would require a sqrt invocation. However, when the sum of squares
                 // is near a value of 1, the square root would also be near 1.
                 // This is a first order Taylor Series approximation around 1 for the sqrt function.
-                // The adjustment is a scalar multiply.
+                // The adjustment is a scalar multiply (not complex multiply).
                 const double d = 1.0 - ( phasor.real()*phasor.real() + phasor.imag()*phasor.imag() - 1.0 ) / 2.0;
                 phasor *= d;
             }
