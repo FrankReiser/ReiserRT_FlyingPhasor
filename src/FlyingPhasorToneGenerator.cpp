@@ -1,14 +1,14 @@
 // Created on 20220105
 
-#include "ComplexToneGenerator.h"
+#include "FlyingPhasorToneGenerator.h"
 
-class ComplexToneGenerator::Imple
+class FlyingPhasorToneGenerator::Imple
 {
 private:
-    friend class ComplexToneGenerator;
+    friend class FlyingPhasorToneGenerator;
 
     /**
-     * Constructor for ComplexToneGenerator::Imple
+     * Constructor for FlyingPhasorToneGenerator::Imple
      *
      * We store the radians per sample argument in rectangular form as a unit vector.
      * This stores how much the tracked "phasor" is rotated each sample.
@@ -56,27 +56,22 @@ private:
         }
     }
 
-#if 0
-    double dx;
-    double dy;
-#else
     const ElementType rate;
     ElementType phasor;
     size_t sampleCounter;
-#endif
 };
 
-ComplexToneGenerator::ComplexToneGenerator( double radiansPerSample, double phi )
+FlyingPhasorToneGenerator::FlyingPhasorToneGenerator( double radiansPerSample, double phi )
   : pImple{ new Imple{ radiansPerSample, phi } }
 {
 }
 
-ComplexToneGenerator::~ComplexToneGenerator()
+FlyingPhasorToneGenerator::~FlyingPhasorToneGenerator()
 {
     delete pImple;
 }
 
-void ComplexToneGenerator::getSamples( size_t numSamples, ElementBufferTypePtr pElementBufferType )
+void FlyingPhasorToneGenerator::getSamples( size_t numSamples, ElementBufferTypePtr pElementBufferType )
 {
     pImple->getSamples( numSamples, pElementBufferType );
 }

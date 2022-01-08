@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(
-	TSG_ComplexToneGen        
+	TSG_FlyingPhasorToneGen
         VERSION 1.0.1
         DESCRIPTION "TSG Complex Tone Generator" )
 
