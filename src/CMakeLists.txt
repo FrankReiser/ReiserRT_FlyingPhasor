@@ -1,6 +1,6 @@
 # Public Header files
 set( _publicHeaders
-        ComplexToneGenerator.h
+        FlyingPhasorToneGenerator.h
         )
 
 # Private Header files (none until otherwise determined)
@@ -10,7 +10,7 @@ set( _privateHeaders
 
 # Private Source files.
 set( _privateSources
-        ComplexToneGenerator.cpp
+        FlyingPhasorToneGenerator.cpp
         )
 
 add_library( TSG_ComplexToneGen SHARED "" )

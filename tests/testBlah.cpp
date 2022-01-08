@@ -1,6 +1,6 @@
 // Created on 20220105
 
-#include "ComplexToneGenerator.h"
+#include "FlyingPhasorToneGenerator.h"
 
 #include "CommandLineParser.h"
 
@@ -74,7 +74,7 @@ public:
         return delta;
     }
 
-    int analyzeSinusoidPhaseStability(const ComplexToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples,
+    int analyzeSinusoidPhaseStability(const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples,
                                       double radiansPerSample, double phi )
     {
         int retCode = 0;
@@ -146,7 +146,7 @@ private:
 class MagPurityAnalyzer
 {
 public:
-    int analyzeSinusoidMagnitudeStability(const ComplexToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples )
+    int analyzeSinusoidMagnitudeStability(const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples )
     {
         int retCode = 0;
 
@@ -227,11 +227,11 @@ int main( int argc, char * argv[])
 
     // Create buffers for a number of samples
     const size_t maxSamples = 8192;
-    std::unique_ptr< ComplexToneGenerator::ElementType[] > pFlyingPhasorToneGenSeries{new ComplexToneGenerator::ElementType [ maxSamples] };
-    std::unique_ptr< ComplexToneGenerator::ElementType[] > pLegacyToneSeries{new ComplexToneGenerator::ElementType [ maxSamples] };
+    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pFlyingPhasorToneGenSeries{new FlyingPhasorToneGenerator::ElementType [ maxSamples] };
+    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pLegacyToneSeries{new FlyingPhasorToneGenerator::ElementType [ maxSamples] };
 
-    // Instantiate the ComplexToneGenerator. This is what we are testing.
-    std::unique_ptr< ComplexToneGenerator > pFlyingPhasorToneGen{ new ComplexToneGenerator{ radiansPerSample, phi } };
+    // Instantiate the FlyingPhasorToneGenerator. This is what we are testing.
+    std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, phi } };
 
     // Phase and Magnitude Purity Analyzers for each "FlyingPhasor" and "Legacy" tone generators.
     PhasePurityAnalyzer legacyPhasePurityAnalyzer{};
@@ -244,8 +244,8 @@ int main( int argc, char * argv[])
     double t0, t1;
 
     // A New, Old-Fashioned Way. Loop on complex exponential. It implements the same cos(x) + j * sin(x).
-    constexpr ComplexToneGenerator::ElementType j{ 0.0, 1.0 };
-    ComplexToneGenerator::ElementBufferTypePtr p = pLegacyToneSeries.get();
+    constexpr FlyingPhasorToneGenerator::ElementType j{ 0.0, 1.0 };
+    FlyingPhasorToneGenerator::ElementBufferTypePtr p = pLegacyToneSeries.get();
     t0 = getClockMonotonic();
     for (size_t n = 0; numSamples != n; ++n )
     {
@@ -258,7 +258,7 @@ int main( int argc, char * argv[])
     // What did we get
     for (size_t n = 0; numSamples != n; ++n )
     {
-        ComplexToneGenerator::ElementType & s = p[n];
+        FlyingPhasorToneGenerator::ElementType & s = p[n];
         std::cout << "n: " << n << ", x: " << real(s) << ", y: " << imag(s)
                   << ", mag: " << abs(s) << ", phase: " << arg(s) << std::endl;
     }
@@ -279,7 +279,7 @@ int main( int argc, char * argv[])
     // What did we get
     for (size_t n = 0; numSamples != n; ++n )
     {
-        ComplexToneGenerator::ElementType & s = p[n];
+        FlyingPhasorToneGenerator::ElementType & s = p[n];
         std::cout << "n: " << n << ", x: " << real(s) << ", y: " << imag(s)
             << ", mag: " << abs(s) << ", phase: " << arg(s) << std::endl;
     }
