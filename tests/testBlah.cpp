@@ -200,6 +200,7 @@ int main( int argc, char * argv[])
 {
     std::cout << "Hello TSG Complex Tone Generator" << std::endl;
 
+    // Parse potential command line. Defaults provided otherwise.
     CommandLineParser cmdLineParser{};
     if ( 0 != cmdLineParser.parseCommandLine(argc, argv) )
     {
@@ -217,37 +218,61 @@ int main( int argc, char * argv[])
             << " --phase=" << cmdLineParser.getPhase() << std::endl << std::endl;
     }
 #endif
+    double radiansPerSample = cmdLineParser.getRadsPerSample();
+    double phi = cmdLineParser.getPhase();
 
     // For maximum view of significant digits for diagnostic purposes.
     std::cout << std::scientific;
     std::cout.precision(17);
 
-    // Instantiate the ComplexToneGen
-    double radiansPerSample = cmdLineParser.getRadsPerSample();
-    double phi = cmdLineParser.getPhase();
-    std::unique_ptr< ComplexToneGenerator > pComplexToneGen{ new ComplexToneGenerator{ radiansPerSample, phi } };
-
-    // Create buffers for a larger than needed number of samples
+    // Create buffers for a number of samples
     const size_t maxSamples = 8192;
-    std::unique_ptr< ComplexToneGenerator::ElementType[] > pToneGenSeries{new ComplexToneGenerator::ElementType [ maxSamples] };
-    std::unique_ptr< ComplexToneGenerator::ElementType[] > pCmplxExpSeries{new ComplexToneGenerator::ElementType [ maxSamples] };
+    std::unique_ptr< ComplexToneGenerator::ElementType[] > pFlyingPhasorToneGenSeries{new ComplexToneGenerator::ElementType [ maxSamples] };
+    std::unique_ptr< ComplexToneGenerator::ElementType[] > pLegacyToneSeries{new ComplexToneGenerator::ElementType [ maxSamples] };
 
-    PhasePurityAnalyzer toneGenPhasePurityAnalyzer{};
-    MagPurityAnalyzer toneGenMagPurityAnalyzer{};
-    PhasePurityAnalyzer cmplxExpPhasePurityAnalyzer{};
-    MagPurityAnalyzer cmplxExpMagPurityAnalyzer{};
+    // Instantiate the ComplexToneGenerator. This is what we are testing.
+    std::unique_ptr< ComplexToneGenerator > pFlyingPhasorToneGen{ new ComplexToneGenerator{ radiansPerSample, phi } };
+
+    // Phase and Magnitude Purity Analyzers for each "FlyingPhasor" and "Legacy" tone generators.
+    PhasePurityAnalyzer legacyPhasePurityAnalyzer{};
+    MagPurityAnalyzer legacyMagPurityAnalyzer{};
+    PhasePurityAnalyzer flyingPhasorPhasePurityAnalyzer{};
+    MagPurityAnalyzer flyingPhasorMagPurityAnalyzer{};
 
     // Ask for some samples from the complex tone generator
     size_t numSamples = 4096;
     double t0, t1;
 
+    // A New, Old-Fashioned Way. Loop on complex exponential. It implements the same cos(x) + j * sin(x).
+    constexpr ComplexToneGenerator::ElementType j{ 0.0, 1.0 };
+    ComplexToneGenerator::ElementBufferTypePtr p = pLegacyToneSeries.get();
+    t0 = getClockMonotonic();
+    for (size_t n = 0; numSamples != n; ++n )
+    {
+        p[n] = exp( j * ( double( n ) * radiansPerSample + phi ) );
+    }
+    t1 = getClockMonotonic();
+    std::cout << "Legacy Generator Performance for numSamples: " << numSamples
+              << " is " << t1-t0 << " seconds." << std::endl;
+#if 0
+    // What did we get
+    for (size_t n = 0; numSamples != n; ++n )
+    {
+        ComplexToneGenerator::ElementType & s = p[n];
+        std::cout << "n: " << n << ", x: " << real(s) << ", y: " << imag(s)
+                  << ", mag: " << abs(s) << ", phase: " << arg(s) << std::endl;
+    }
+#endif
+
     int retCode = 0;
 
+    legacyPhasePurityAnalyzer.analyzeSinusoidPhaseStability(pLegacyToneSeries.get(), numSamples, radiansPerSample, phi );
+    legacyMagPurityAnalyzer.analyzeSinusoidMagnitudeStability(pLegacyToneSeries.get(), numSamples );
     t0 = getClockMonotonic();
-    ComplexToneGenerator::ElementBufferTypePtr p = pToneGenSeries.get();
-    pComplexToneGen->getSamples( numSamples, p );
+    p = pFlyingPhasorToneGenSeries.get();
+    pFlyingPhasorToneGen->getSamples(numSamples, p );
     t1 = getClockMonotonic();
-    std::cout << "New Generator Performance for numSamples: " << numSamples
+    std::cout << "Flying Phasor Generator Performance for numSamples: " << numSamples
         << " is " << t1-t0 << " seconds." << std::endl;
 
 #if 0
@@ -260,33 +285,9 @@ int main( int argc, char * argv[])
     }
 #endif
 
-    toneGenPhasePurityAnalyzer.analyzeSinusoidPhaseStability( pToneGenSeries.get(), numSamples, radiansPerSample, phi );
-    toneGenMagPurityAnalyzer.analyzeSinusoidMagnitudeStability( pToneGenSeries.get(), numSamples );
+    flyingPhasorPhasePurityAnalyzer.analyzeSinusoidPhaseStability(pFlyingPhasorToneGenSeries.get(), numSamples, radiansPerSample, phi );
+    flyingPhasorMagPurityAnalyzer.analyzeSinusoidMagnitudeStability(pFlyingPhasorToneGenSeries.get(), numSamples );
 
-    // New, Old-Fashioned Way.
-    // Loop on complex exponential
-    constexpr ComplexToneGenerator::ElementType j{ 0.0, 1.0 };
-    p = pCmplxExpSeries.get();
-    t0 = getClockMonotonic();
-    for (size_t n = 0; numSamples != n; ++n )
-    {
-        p[n] = exp( j * ( double( n ) * radiansPerSample + phi ) );
-    }
-    t1 = getClockMonotonic();
-    std::cout << "Old Generator Performance for numSamples: " << numSamples
-              << " is " << t1-t0 << " seconds." << std::endl;
-#if 0
-    // What did we get
-    for (size_t n = 0; numSamples != n; ++n )
-    {
-        ComplexToneGenerator::ElementType & s = p[n];
-        std::cout << "n: " << n << ", x: " << real(s) << ", y: " << imag(s)
-                  << ", mag: " << abs(s) << ", phase: " << arg(s) << std::endl;
-    }
-#endif
-
-    cmplxExpPhasePurityAnalyzer.analyzeSinusoidPhaseStability( pCmplxExpSeries.get(), numSamples, radiansPerSample, phi );
-    cmplxExpMagPurityAnalyzer.analyzeSinusoidMagnitudeStability( pCmplxExpSeries.get(), numSamples );
 
     exit( retCode );
     return retCode;
