@@ -1,5 +1,5 @@
 add_executable( testBlah "" )
 target_sources( testBlah PRIVATE testBlah.cpp )
-target_include_directories( testBlah PUBLIC ../src )
-target_link_libraries( testBlah TSG_ComplexToneGen )
-add_test( NAME runBlahTest COMMAND $<TARGET_FILE:testBlah> )
+target_include_directories( testBlah PUBLIC ../src ../testUtilities )
+target_link_libraries( testBlah TSG_ComplexToneGen TestUtilities )
+add_test( NAME runBlahTest COMMAND $<TARGET_FILE:testBlah> --radsPerSample=2.0 --phase=1.5 )
