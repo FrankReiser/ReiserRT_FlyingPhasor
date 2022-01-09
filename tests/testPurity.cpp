@@ -27,8 +27,6 @@ double getClockMonotonic()
 // variance from small deviations in the input train.
 class StatsStateMachine
 {
-    static constexpr long double myNAN = std::numeric_limits<long double>::quiet_NaN();
-
 public:
     void addSample( double value )
     {
@@ -47,16 +45,16 @@ public:
     {
         switch ( nSamples )
         {
-            case 0 : return { myNAN, myNAN };
-            case 1 : return { mean, myNAN };
+            case 0 : return { std::numeric_limits<long double>::quiet_NaN(), std::numeric_limits<long double>::quiet_NaN() };
+            case 1 : return { mean, std::numeric_limits<long double>::quiet_NaN() };
             default : return { mean, M2 / (long double)(nSamples-1) };
         }
     }
-    std::pair<double, double> getPopcorn() const
+    std::pair<double, double> getMinMaxDev() const
     {
         switch ( nSamples )
         {
-            case 0 : return { myNAN, myNAN };
+            case 0 : return { std::numeric_limits<long double>::quiet_NaN(), std::numeric_limits<long double>::quiet_NaN() };
             default : return {maxNegDev, maxPosDev };
         }
     }
@@ -131,7 +129,7 @@ public:
     }
 
     std::pair<double, double> getStats() const { return statsStateMachine.getStats(); }
-    std::pair<double, double> getPopcorn() const { return statsStateMachine.getPopcorn(); }
+    std::pair<double, double> getMinMaxDev() const { return statsStateMachine.getMinMaxDev(); }
 
 private:
     StatsStateMachine statsStateMachine{};
@@ -189,7 +187,7 @@ public:
     }
 
     std::pair<double, double> getStats() const { return statsStateMachine.getStats(); }
-    std::pair<double, double> getPopcorn() const { return statsStateMachine.getPopcorn(); }
+    std::pair<double, double> getMinMaxDev() const { return statsStateMachine.getMinMaxDev(); }
 
 private:
     StatsStateMachine statsStateMachine{};
@@ -251,8 +249,6 @@ int main( int argc, char * argv[] )
         p[n] = exp( j * ( double( n ) * radiansPerSample + phi ) );
     }
     t1 = getClockMonotonic();
-    std::cout << "Legacy Generator Performance for numSamples: " << numSamples
-              << " is " << t1-t0 << " seconds." << std::endl;
 #if 0
     // What did we get
     for (size_t n = 0; numSamples != n; ++n )
@@ -263,33 +259,33 @@ int main( int argc, char * argv[] )
     }
 #endif
 
-    // NOTE: We are not going to "Validate" performance of the Legacy Generator. It is very good, just slow.
-    // Good up to some extremely high number of samples anyway. The Flying Phasor Generator
-    // is immune to number of samples up to infinite.
-    // We primarily run analysis on it to establish a baseline of performance metrics
-    // to validate the Flying Phasor Generator against it.
+    std::cout << "************ Legacy Performance Measurements ************" << std::endl;
     legacyPhasePurityAnalyzer.analyzePhaseStability( pLegacyToneSeries.get(), numSamples, radiansPerSample, phi );
-    {
-        auto stats = legacyPhasePurityAnalyzer.getStats();
-        auto popCorn = legacyPhasePurityAnalyzer.getPopcorn();
-        std::cout << "Mean Angular Rate: " << stats.first << ", Variance: " << stats.second << std::endl;
-        std::cout << "Phase PopCorn Noise: maxNegDev: " << popCorn.first << ", maxPosDev: " << popCorn.second << std::endl;
-    }
+    auto legacyPhaseStats = legacyPhasePurityAnalyzer.getStats();
+    auto legacyPhaseMinMaxDev = legacyPhasePurityAnalyzer.getMinMaxDev();
+    auto legacyPhasePeakAbsDev = std::max(-legacyPhaseMinMaxDev.first, legacyPhaseMinMaxDev.second );
+    std::cout << "Mean Angular Rate: " << legacyPhaseStats.first << ", Variance: " << legacyPhaseStats.second << std::endl;
+    std::cout << "Phase Noise: maxNegDev: " << legacyPhaseMinMaxDev.first << ", maxPosDev: "
+              << legacyPhaseMinMaxDev.second << ", maxAbsDev: " << legacyPhasePeakAbsDev << std::endl;
     legacyMagPurityAnalyzer.analyzeSinusoidMagnitudeStability(pLegacyToneSeries.get(), numSamples );
-    {
-        auto stats = legacyMagPurityAnalyzer.getStats();
-        double signalPower = stats.first * stats.first / 2;   // Should always be 0.5
-        std::cout << "Mean Magnitude: " << stats.first << ", Variance: " << stats.second
-                  << ", SNR: " << 10.0 * std::log10( signalPower / stats.second ) << " dB" << std::endl;
-    }
+    auto legacyMagStats = legacyMagPurityAnalyzer.getStats();
+    auto legacySignalPower = legacyMagStats.first * legacyMagStats.first / 2;   // Should always be 0.5
+    auto legacyMagMinMaxDev = legacyMagPurityAnalyzer.getMinMaxDev();
+    auto legacyMagPeakAbsDev = std::max(-legacyMagMinMaxDev.first, legacyMagMinMaxDev.second );
+    auto legacyMagDeltaT = t1 - t0;
+    std::cout << "Mean Magnitude: " << legacyMagStats.first << ", Variance: " << legacyMagStats.second
+              << ", SNR: " << 10.0 * std::log10( legacySignalPower / legacyMagStats.second ) << " dB" << std::endl;
+    std::cout << "Magnitude Noise: maxNegDev: " << legacyMagMinMaxDev.first << ", maxPosDev: "
+              << legacyMagMinMaxDev.second << ", maxAbsDev: " << legacyMagPeakAbsDev << std::endl;
+    std::cout << "Performance for numSamples: " << numSamples
+              << " is " << legacyMagDeltaT << " seconds." << std::endl;
 
+    std::cout << std::endl;
 
     t0 = getClockMonotonic();
     p = pFlyingPhasorToneGenSeries.get();
     pFlyingPhasorToneGen->getSamples( numSamples, p );
     t1 = getClockMonotonic();
-    std::cout << "Flying Phasor Generator Performance for numSamples: " << numSamples
-        << " is " << t1-t0 << " seconds." << std::endl;
 
 #if 0
     // What did we get
@@ -300,34 +296,44 @@ int main( int argc, char * argv[] )
             << ", mag: " << abs(s) << ", phase: " << arg(s) << std::endl;
     }
 #endif
-
+    std::cout << "************ Flying Phasor Performance Measurements ************" << std::endl;
     flyingPhasorPhasePurityAnalyzer.analyzePhaseStability( pFlyingPhasorToneGenSeries.get(), numSamples,
         radiansPerSample, phi );
-    {
-        auto stats = flyingPhasorPhasePurityAnalyzer.getStats();
-        auto popCorn = flyingPhasorPhasePurityAnalyzer.getPopcorn();
-        std::cout << "Mean Angular Rate: " << stats.first << ", Variance: " << stats.second << std::endl;
-        std::cout << "Phase PopCorn Noise: maxNegDev: " << popCorn.first << ", maxPosDev: " << popCorn.second << std::endl;
-    }
+    auto flyingPhasorPhaseStats = flyingPhasorPhasePurityAnalyzer.getStats();
+    auto flyingPhasorPhaseMinMaxDev = flyingPhasorPhasePurityAnalyzer.getMinMaxDev();
+    auto flyingPhasorPhasePeakAbsDev = std::max(-flyingPhasorPhaseMinMaxDev.first, flyingPhasorPhaseMinMaxDev.second );
+    std::cout << "Mean Angular Rate: " << flyingPhasorPhaseStats.first << ", Variance: " << flyingPhasorPhaseStats.second << std::endl;
+    std::cout << "Phase Noise: maxNegDev: " << flyingPhasorPhaseMinMaxDev.first << ", maxPosDev: "
+              << flyingPhasorPhaseMinMaxDev.second << ", maxAbsDev: " << flyingPhasorPhasePeakAbsDev << std::endl;
     flyingPhasorMagPurityAnalyzer.analyzeSinusoidMagnitudeStability(pFlyingPhasorToneGenSeries.get(), numSamples );
-    {
-        auto stats = flyingPhasorMagPurityAnalyzer.getStats();
-        double signalPower = stats.first * stats.first / 2;   // Should always be 0.5
-        std::cout << "Mean Magnitude: " << stats.first << ", Variance: " << stats.second
-                  << ", SNR: " << 10.0 * std::log10( signalPower / stats.second ) << " dB" << std::endl;
-    }
+    auto flyingPhasorMagStats = flyingPhasorMagPurityAnalyzer.getStats();
+    double signalPower = flyingPhasorMagStats.first * flyingPhasorMagStats.first / 2;   // Should always be 0.5
+    auto flyingPhasorMagMinMaxDev = flyingPhasorMagPurityAnalyzer.getMinMaxDev();
+    auto flyingPhasorMagPeakAbsDev = std::max(-flyingPhasorMagMinMaxDev.first, flyingPhasorMagMinMaxDev.second );
+    auto flyingPhasorMagDeltaT = t1 - t0;
+    std::cout << "Mean Magnitude: " << flyingPhasorMagStats.first << ", Variance: " << flyingPhasorMagStats.second
+              << ", SNR: " << 10.0 * std::log10( signalPower / flyingPhasorMagStats.second ) << " dB" << std::endl;
+    std::cout << "Magnitude Noise: maxNegDev: " << flyingPhasorMagMinMaxDev.first << ", maxPosDev: "
+              << flyingPhasorMagMinMaxDev.second << ", maxAbsDev: " << flyingPhasorMagPeakAbsDev << std::endl;
+    std::cout << "Performance for numSamples: " << numSamples
+              << " is " << flyingPhasorMagDeltaT << " seconds." << std::endl;
 
 
     // Now for the Validating.
+    // NOTE: We are not going to "Validate" performance of the Legacy Generator. It is very good, just slow.
+    // Good up to some extremely high number of samples anyway. The Flying Phasor Generator
+    // is immune to number of samples up to infinite.
+    // We primarily run analysis on it to establish a baseline of performance metrics
+    // to validate the Flying Phasor Generator against it.
     int retCode = 0;
-
     do
     {
+#if 0
         // Flying Phasor Tone Generator Phase Purity Validation
         {
-            auto legacyPopcorn = legacyPhasePurityAnalyzer.getPopcorn();
-            auto flyingPhasorPopcorn = flyingPhasorPhasePurityAnalyzer.getPopcorn();
-            auto legacyPeakAbsDev = std::max( -legacyPopcorn.first, legacyPopcorn.second );
+//            auto legacyPopcorn = legacyPhasePurityAnalyzer.getPopcorn();
+            auto flyingPhasorPopcorn = flyingPhasorPhasePurityAnalyzer.getMinMaxDev();
+//            auto legacyPeakAbsDev = std::max( -legacyPopcorn.first, legacyPopcorn.second );
             auto flyingPhasorPeakAbsDev = std::max( -flyingPhasorPopcorn.first, flyingPhasorPopcorn.second );
 
             std::cout << std::endl << std::endl
@@ -360,8 +366,8 @@ int main( int argc, char * argv[] )
                 break;
             }
 
-            auto legacyStats = legacyPhasePurityAnalyzer.getStats();
-            auto legacyVariance = legacyStats.second;
+//            auto legacyStats = legacyPhasePurityAnalyzer.getStats();
+//            auto legacyVariance = legacyStats.second;
             auto flyingPhasorVariance = flyingPhasorStats.second;
             if ( flyingPhasorVariance < legacyVariance )
             {
@@ -381,8 +387,8 @@ int main( int argc, char * argv[] )
 
         // Flying Phasor Tone Generator Phase Purity Validation
         {
-            auto legacyPopcorn = legacyMagPurityAnalyzer.getPopcorn();
-            auto flyingPhasorPopcorn = flyingPhasorMagPurityAnalyzer.getPopcorn();
+            auto legacyPopcorn = legacyMagPurityAnalyzer.getMinMaxDev();
+            auto flyingPhasorPopcorn = flyingPhasorMagPurityAnalyzer.getMinMaxDev();
             auto legacyPeakAbsDev = std::max( -legacyPopcorn.first, legacyPopcorn.second );
             auto flyingPhasorPeakAbsDev = std::max( -flyingPhasorPopcorn.first, flyingPhasorPopcorn.second );
 
@@ -434,7 +440,7 @@ int main( int argc, char * argv[] )
                 break;
             }
         }
-
+#endif
     } while (false);
 
 
