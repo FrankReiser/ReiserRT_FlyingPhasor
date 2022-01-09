@@ -1,14 +1,32 @@
 #include "FlyingPhasorToneGenerator.h"
 
+#include "CommandLineParser.h"
+
 #include <iostream>
 #include <memory>
 
-int main()
+int main( int argc, char * argv[] )
 {
-//    double radiansPerSample = cmdLineParser.getRadsPerSample();
-//    double phi = cmdLineParser.getPhase();
-    double radiansPerSample = 1.0;
-    double phi = 0.0;
+    // Parse potential command line. Defaults provided otherwise.
+    CommandLineParser cmdLineParser{};
+    if ( 0 != cmdLineParser.parseCommandLine(argc, argv) )
+    {
+        std::cout << "Failed parsing command line" << std::endl;
+        std::cout << "Optional Arguments are:" << std::endl;
+        std::cout << "\t--radsPerSample=<double>: The radians per sample to used." << std::endl;
+        std::cout << "\t--phase=<double>: The initial phase in radians." << std::endl;
+
+        exit( -1 );
+    }
+#if 0
+    else
+    {
+        std::cout << "Parsed: --radiansPerSample=" << cmdLineParser.getRadsPerSample()
+                  << " --phase=" << cmdLineParser.getPhase() << std::endl << std::endl;
+    }
+#endif
+    double radiansPerSample = cmdLineParser.getRadsPerSample();
+    double phi = cmdLineParser.getPhase();
 
     // Generate Samples
     constexpr size_t numSamples = 4096;
