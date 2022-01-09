@@ -140,10 +140,8 @@ private:
 class MagPurityAnalyzer
 {
 public:
-    int analyzeSinusoidMagnitudeStability( const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples )
+    void analyzeSinusoidMagnitudeStability( const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples )
     {
-        int retCode = 0;
-
         // Reset stats in case an instance is re-run.
         statsStateMachine.reset();
 
@@ -153,6 +151,7 @@ public:
             // We are trying to catch the oddball here as a few oddballs may not create much variance.
             // Variance we check later.
             auto mag = std::abs( pBuf[ n ] );
+#if 0
             if ( !inTolerance( mag, 1.0, 1e-15 ) )
             {
                 std::cout << "Magnitude error at sample: " << n << "! Expected: " << 1.0
@@ -160,10 +159,12 @@ public:
                 retCode = 1;
                 break;
             }
+#endif
 
             statsStateMachine.addSample( mag );
         }
 
+#if 0
         // Now test the statistics look good.
         auto magStats = statsStateMachine.getStats();
         if ( !inTolerance( magStats.first, 1.0, 1e-12 ) )
@@ -184,7 +185,11 @@ public:
                   << ", SNR: " << 10.0 * std::log10( signalPower / magStats.second ) << " dB" << std::endl;
 
         return retCode;
+#endif
     }
+
+    std::pair<double, double> getStats() const { return statsStateMachine.getStats(); }
+    std::pair<double, double> getPopcorn() const { return statsStateMachine.getPopcorn(); }
 
 private:
     StatsStateMachine statsStateMachine{};
@@ -258,11 +263,11 @@ int main( int argc, char * argv[] )
     }
 #endif
 
-    // NOTE: We are not going to "Validate" performance of the Legacy Generator. It's good.
-    // At least possibly up to some extremely high number of samples. The Flying Phasor Generator
-    // is immune to number of samples up to infinity.
+    // NOTE: We are not going to "Validate" performance of the Legacy Generator. It is very good, just slow.
+    // Good up to some extremely high number of samples anyway. The Flying Phasor Generator
+    // is immune to number of samples up to infinite.
     // We primarily run analysis on it to establish a baseline of performance metrics
-    // to validate the Flying Phasor Generator against.
+    // to validate the Flying Phasor Generator against it.
     legacyPhasePurityAnalyzer.analyzePhaseStability( pLegacyToneSeries.get(), numSamples, radiansPerSample, phi );
     {
         auto stats = legacyPhasePurityAnalyzer.getStats();
@@ -271,6 +276,12 @@ int main( int argc, char * argv[] )
         std::cout << "Phase PopCorn Noise: maxNegDev: " << popCorn.first << ", maxPosDev: " << popCorn.second << std::endl;
     }
     legacyMagPurityAnalyzer.analyzeSinusoidMagnitudeStability(pLegacyToneSeries.get(), numSamples );
+    {
+        auto stats = legacyMagPurityAnalyzer.getStats();
+        double signalPower = stats.first * stats.first / 2;   // Should always be 0.5
+        std::cout << "Mean Magnitude: " << stats.first << ", Variance: " << stats.second
+                  << ", SNR: " << 10.0 * std::log10( signalPower / stats.second ) << " dB" << std::endl;
+    }
 
 
     t0 = getClockMonotonic();
@@ -299,6 +310,12 @@ int main( int argc, char * argv[] )
         std::cout << "Phase PopCorn Noise: maxNegDev: " << popCorn.first << ", maxPosDev: " << popCorn.second << std::endl;
     }
     flyingPhasorMagPurityAnalyzer.analyzeSinusoidMagnitudeStability(pFlyingPhasorToneGenSeries.get(), numSamples );
+    {
+        auto stats = flyingPhasorMagPurityAnalyzer.getStats();
+        double signalPower = stats.first * stats.first / 2;   // Should always be 0.5
+        std::cout << "Mean Magnitude: " << stats.first << ", Variance: " << stats.second
+                  << ", SNR: " << 10.0 * std::log10( signalPower / stats.second ) << " dB" << std::endl;
+    }
 
 
     // Now for the Validating.
@@ -350,7 +367,7 @@ int main( int argc, char * argv[] )
             {
                 std::cout << "Flying Phasor BEATS out Legacy in Phase Variance Test!" << std::endl;
             }
-            else if (flyingPhasorVariance < legacyVariance * 1.075 )
+            else if ( flyingPhasorVariance < legacyVariance * 1.075 )
             {
                 std::cout << "Flying Phasor WITHIN Phase Variance Test Tolerance." << std::endl;
             }
@@ -358,6 +375,62 @@ int main( int argc, char * argv[] )
             {
                 std::cout << "Flying Phasor FAILS Phase Variance Test - Out of Tolerance!" << std::endl;
                 retCode = 3;
+                break;
+            }
+        }
+
+        // Flying Phasor Tone Generator Phase Purity Validation
+        {
+            auto legacyPopcorn = legacyMagPurityAnalyzer.getPopcorn();
+            auto flyingPhasorPopcorn = flyingPhasorMagPurityAnalyzer.getPopcorn();
+            auto legacyPeakAbsDev = std::max( -legacyPopcorn.first, legacyPopcorn.second );
+            auto flyingPhasorPeakAbsDev = std::max( -flyingPhasorPopcorn.first, flyingPhasorPopcorn.second );
+
+            std::cout << std::endl << std::endl
+                      << "Old Peak Magnitude Noise: " << legacyPeakAbsDev
+                      << ", New Peak Magnitude Noise: " << flyingPhasorPeakAbsDev << std::endl
+                    ;
+
+            if ( flyingPhasorPeakAbsDev < legacyPeakAbsDev )
+            {
+                std::cout << "Flying Phasor BEATS out Legacy in Peak Abs Magnitude Deviation Test!" << std::endl;
+            }
+            else if ( flyingPhasorPeakAbsDev < legacyPeakAbsDev * 3.0 )
+            {
+                std::cout << "Flying Phasor WITHIN Peak Abs Magnitude Deviation Test Tolerance." << std::endl;
+            }
+            else
+            {
+                std::cout << "Flying Phasor FAILS Peak Abs Magnitude Deviation Test - Out of Tolerance!" << std::endl;
+                retCode = 4;
+                break;
+            }
+
+            auto flyingPhasorStats = flyingPhasorMagPurityAnalyzer.getStats();
+            auto flyingPhasorMean = flyingPhasorStats.first;
+            if ( !inTolerance( flyingPhasorMean, 1.0, 1e-15 ) )
+            {
+                std::cout << "Flying Phasor FAILS Mean Magnitude Test! Expected: " << 1.0
+                          << ", Detected: " << flyingPhasorMean << std::endl;
+                retCode = 5;
+                break;
+            }
+
+            auto legacyStats = legacyMagPurityAnalyzer.getStats();
+            auto legacyVariance = legacyStats.second;
+            auto flyingPhasorVariance = flyingPhasorStats.second;
+            if ( flyingPhasorVariance < legacyVariance )
+            {
+                std::cout << "Flying Phasor BEATS out Legacy in Magnitude Variance Test!" << std::endl;
+            }
+            else if ( flyingPhasorVariance < legacyVariance * 2.0 )
+            {
+                std::cout << "Flying Phasor WITHIN Magnitude Variance Test Tolerance." << std::endl;
+            }
+            else
+            {
+                std::cout << "Flying Phasor FAILS Magnitude Variance Test - Out of Tolerance!" << std::endl;
+                retCode = 6;
                 break;
             }
         }
