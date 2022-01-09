@@ -50,4 +50,4 @@ add_subdirectory( testUtilities )
 enable_testing()
 add_subdirectory( tests )
 
-#add_subdirectory( sundry )
+add_subdirectory( sundry )
