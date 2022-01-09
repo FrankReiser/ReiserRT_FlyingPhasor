@@ -27,21 +27,24 @@ double getClockMonotonic()
 // variance from small deviations in the input train.
 class StatsStateMachine
 {
+    static constexpr long double myNAN = std::numeric_limits<long double>::quiet_NaN();
+
 public:
     void addSample( double value )
     {
-        if ( value < min ) min = value;
-        if ( value > max ) max = value;
         long double delta = value - mean;
         ++nSamples;
         mean += delta / (long double)( nSamples );
         M2 += delta * ( value - mean );
+
+        delta = value - mean;
+        if (delta < maxNegDev ) maxNegDev = delta;
+        if (delta > maxPosDev ) maxPosDev = delta;
     }
 
     // Currently, returns mean and variance
     std::pair<double, double> getStats() const
     {
-        constexpr long double myNAN = std::numeric_limits<long double>::quiet_NaN();
         switch ( nSamples )
         {
             case 0 : return { myNAN, myNAN };
@@ -49,54 +52,50 @@ public:
             default : return { mean, M2 / (long double)(nSamples-1) };
         }
     }
-    std::pair<double, double> getPopcorn() const { return {min,max}; }
+    std::pair<double, double> getPopcorn() const
+    {
+        switch ( nSamples )
+        {
+            case 0 : return { myNAN, myNAN };
+            default : return {maxNegDev, maxPosDev };
+        }
+    }
 
-    void reset() { mean=0.0; M2=0.0; min=0.0, max=0.0; nSamples=0; }
-
+    void reset()
+    {
+        mean = 0.0;
+        M2 = 0.0;
+        maxNegDev = std::numeric_limits< double >::max();
+        maxPosDev = std::numeric_limits< double >::lowest();
+        nSamples = 0;
+    }
 
 private:
-    long double mean{0.0};
-    long double M2{0.0};
-    double max{std::numeric_limits< double >::max()};
-    double min{-max};
-    size_t nSamples{0};
+    long double mean{ 0.0 };
+    long double M2{ 0.0 };
+    long double maxNegDev{std::numeric_limits< long double >::max() };
+    long double maxPosDev{std::numeric_limits< long double >::lowest() };
+    size_t nSamples{};
 };
 
 class PhasePurityAnalyzer
 {
 public:
 
-    int analyzeSinusoidPhaseStability( const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples,
-                                      double radiansPerSample, double phi )
+    void analyzePhaseStability( const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples,
+                              double radiansPerSample, double phi )
     {
-        int retCode = 0;
-
         // Reset stats in case an instance is re-run.
         statsStateMachine.reset();
 
         for ( size_t n=0; nSamples != n; ++n )
         {
-            ///@todo Make initialization a separate test that we run so we can remove it from here.
-            // If n is zero, then we merely want to ensure that our first phase is approximately equivalent
-            // to argument "phi". If not, this is an obvious failure.
-            if ( 0 == n )
-            {
-                // This 1e-9 tolerance check adequate for initial phi setting.
-                if ( !inTolerance( std::arg( pBuf[ n ] ), phi, 1e-9 ) )
-                {
-                    std::cout << "Starting Phase: " <<  std::arg( pBuf[ n ] ) << " Out of Tolerance! Should be: "
-                              << phi << std::endl;
-
-                    retCode = 1;
-                    break;
-                }
-            }
-
             // We cheat the first sample because there is no previous one in order to compute
             // a delta. Being that we are expecting a periodic complex waveform, this would be
             // the radiansPerSample given as an argument.
             auto phaseDelta = 0 == n ? radiansPerSample : deltaAngle(std::arg(pBuf[n - 1 ] ), std::arg(pBuf[ n ] ) );
 
+#if 0
             // If the phaseDelta is far too far off of radiansPerSample. This is an obvious failure.
             // We are trying to catch the oddball here as a few oddballs may not create much variance.
             // Variance we check later.
@@ -107,11 +106,12 @@ public:
                 retCode = 2;
                 break;
             }
-
+#endif
             // Run stats state machine for overall mean and variance check.
             statsStateMachine.addSample( phaseDelta );
         }
 
+#if 0
         // Now test the statistics look good.
         auto rateStats = statsStateMachine.getStats();
         if ( !inTolerance( rateStats.first, radiansPerSample, 1e-15 ) )
@@ -126,11 +126,12 @@ public:
                       << ", Detected: " << rateStats.second << std::endl;
             retCode = 4;
         }
-
         std::cout << "Mean Angular Rate: " << rateStats.first << ", Variance: " << rateStats.second << std::endl;
-
-        return retCode;
+#endif
     }
+
+    std::pair<double, double> getStats() const { return statsStateMachine.getStats(); }
+    std::pair<double, double> getPopcorn() const { return statsStateMachine.getPopcorn(); }
 
 private:
     StatsStateMachine statsStateMachine{};
@@ -234,12 +235,14 @@ int main( int argc, char * argv[] )
     size_t numSamples = 4096;
     double t0, t1;
 
-    // A New, Old-Fashioned Way. Loop on complex exponential. It implements the same cos(x) + j * sin(x).
+    // New Old-Fashioned Way. Loop on complex exponential. It implements the same cos(x) + j * sin(x)
+    // as the Legacy generator. Just in a little less source code written by me.
     constexpr FlyingPhasorToneGenerator::ElementType j{ 0.0, 1.0 };
     FlyingPhasorToneGenerator::ElementBufferTypePtr p = pLegacyToneSeries.get();
     t0 = getClockMonotonic();
-    for (size_t n = 0; numSamples != n; ++n )
+    for ( size_t n = 0; numSamples != n; ++n )
     {
+        // Complex Exponential
         p[n] = exp( j * ( double( n ) * radiansPerSample + phi ) );
     }
     t1 = getClockMonotonic();
@@ -255,15 +258,24 @@ int main( int argc, char * argv[] )
     }
 #endif
 
-    int retCode = 0;
-
-    legacyPhasePurityAnalyzer.analyzeSinusoidPhaseStability(pLegacyToneSeries.get(), numSamples, radiansPerSample, phi );
+    // NOTE: We are not going to "Validate" performance of the Legacy Generator. It's good.
+    // At least possibly up to some extremely high number of samples. The Flying Phasor Generator
+    // is immune to number of samples up to infinity.
+    // We primarily run analysis on it to establish a baseline of performance metrics
+    // to validate the Flying Phasor Generator against.
+    legacyPhasePurityAnalyzer.analyzePhaseStability( pLegacyToneSeries.get(), numSamples, radiansPerSample, phi );
+    {
+        auto stats = legacyPhasePurityAnalyzer.getStats();
+        auto popCorn = legacyPhasePurityAnalyzer.getPopcorn();
+        std::cout << "Mean Angular Rate: " << stats.first << ", Variance: " << stats.second << std::endl;
+        std::cout << "Phase PopCorn Noise: maxNegDev: " << popCorn.first << ", maxPosDev: " << popCorn.second << std::endl;
+    }
     legacyMagPurityAnalyzer.analyzeSinusoidMagnitudeStability(pLegacyToneSeries.get(), numSamples );
 
 
     t0 = getClockMonotonic();
     p = pFlyingPhasorToneGenSeries.get();
-    pFlyingPhasorToneGen->getSamples(numSamples, p );
+    pFlyingPhasorToneGen->getSamples( numSamples, p );
     t1 = getClockMonotonic();
     std::cout << "Flying Phasor Generator Performance for numSamples: " << numSamples
         << " is " << t1-t0 << " seconds." << std::endl;
@@ -278,8 +290,79 @@ int main( int argc, char * argv[] )
     }
 #endif
 
-    flyingPhasorPhasePurityAnalyzer.analyzeSinusoidPhaseStability(pFlyingPhasorToneGenSeries.get(), numSamples, radiansPerSample, phi );
+    flyingPhasorPhasePurityAnalyzer.analyzePhaseStability( pFlyingPhasorToneGenSeries.get(), numSamples,
+        radiansPerSample, phi );
+    {
+        auto stats = flyingPhasorPhasePurityAnalyzer.getStats();
+        auto popCorn = flyingPhasorPhasePurityAnalyzer.getPopcorn();
+        std::cout << "Mean Angular Rate: " << stats.first << ", Variance: " << stats.second << std::endl;
+        std::cout << "Phase PopCorn Noise: maxNegDev: " << popCorn.first << ", maxPosDev: " << popCorn.second << std::endl;
+    }
     flyingPhasorMagPurityAnalyzer.analyzeSinusoidMagnitudeStability(pFlyingPhasorToneGenSeries.get(), numSamples );
+
+
+    // Now for the Validating.
+    int retCode = 0;
+
+    do
+    {
+        // Flying Phasor Tone Generator Phase Purity Validation
+        {
+            auto legacyPopcorn = legacyPhasePurityAnalyzer.getPopcorn();
+            auto flyingPhasorPopcorn = flyingPhasorPhasePurityAnalyzer.getPopcorn();
+            auto legacyPeakAbsDev = std::max( -legacyPopcorn.first, legacyPopcorn.second );
+            auto flyingPhasorPeakAbsDev = std::max( -flyingPhasorPopcorn.first, flyingPhasorPopcorn.second );
+
+            std::cout << std::endl << std::endl
+                << "Old Peak Phase Noise: " << legacyPeakAbsDev
+                << ", New Peak Phase Noise: " << flyingPhasorPeakAbsDev << std::endl
+                ;
+
+            if ( flyingPhasorPeakAbsDev < legacyPeakAbsDev )
+            {
+                std::cout << "Flying Phasor BEATS out Legacy in Peak Abs Phase Deviation Test!" << std::endl;
+            }
+            else if (flyingPhasorPeakAbsDev < legacyPeakAbsDev * 1.01 )
+            {
+                std::cout << "Flying Phasor WITHIN Peak Abs Phase Deviation Test Tolerance." << std::endl;
+            }
+            else
+            {
+                std::cout << "Flying Phasor FAILS Peak Abs Phase Deviation Test - Out of Tolerance!" << std::endl;
+                retCode = 1;
+                break;
+            }
+
+            auto flyingPhasorStats = flyingPhasorPhasePurityAnalyzer.getStats();
+            auto flyingPhasorMean = flyingPhasorStats.first;
+            if ( !inTolerance( flyingPhasorMean, radiansPerSample, 1e-15 ) )
+            {
+                std::cout << "Flying Phasor FAILS Mean Angular Rate Test! Expected: " << radiansPerSample
+                          << ", Detected: " << flyingPhasorMean << std::endl;
+                retCode = 2;
+                break;
+            }
+
+            auto legacyStats = legacyPhasePurityAnalyzer.getStats();
+            auto legacyVariance = legacyStats.second;
+            auto flyingPhasorVariance = flyingPhasorStats.second;
+            if ( flyingPhasorVariance < legacyVariance )
+            {
+                std::cout << "Flying Phasor BEATS out Legacy in Phase Variance Test!" << std::endl;
+            }
+            else if (flyingPhasorVariance < legacyVariance * 1.075 )
+            {
+                std::cout << "Flying Phasor WITHIN Phase Variance Test Tolerance." << std::endl;
+            }
+            else
+            {
+                std::cout << "Flying Phasor FAILS Phase Variance Test - Out of Tolerance!" << std::endl;
+                retCode = 3;
+                break;
+            }
+        }
+
+    } while (false);
 
 
     exit( retCode );
