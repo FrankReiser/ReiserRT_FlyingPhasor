@@ -102,15 +102,43 @@ int main( int argc, char * argv[] )
         std::cout << pSpectralSeries[i].real() << " " << pSpectralSeries[i].imag() << std::endl;
 #endif
 
-    // Build the power spectrum
+    // Build the power spectrum and while where at it record the Top Maximum
+    double topMaxVal = 0.0;
+    size_t topMaxIndex = -1;
     for ( size_t i=0; numSamples != i; ++i )
     {
         auto mag = std::abs( pSpectralSeries[i] );
-        pPowerSpectrum[i] = mag * mag;
-#if 1
+        if ( topMaxVal < ( pPowerSpectrum[i] = mag * mag ) )
+        {
+            topMaxVal = pPowerSpectrum[i];
+            topMaxIndex = i;
+        }
+#if 0
         std::cout << pPowerSpectrum[i] << std::endl;
 #endif
     }
+    std::cout << "Top Max of: " << topMaxVal << " found at index: " << topMaxIndex << std::endl;
+
+    // Find the Second Maximum
+    pPowerSpectrum[topMaxIndex] = 0;    // So we don't find it again
+#if 0
+    pPowerSpectrum[1024] = 1;    // Test Signal Poke
+#endif
+    double secondMaxVal = 0.0;
+    size_t secondMaxIndex = -1;
+    for ( size_t i=0; numSamples != i; ++i )
+    {
+        if ( secondMaxVal < pPowerSpectrum[i] )
+        {
+            secondMaxVal = pPowerSpectrum[i];
+            secondMaxIndex = i;
+        }
+#if 0
+        std::cout << pPowerSpectrum[i] << std::endl;
+#endif
+    }
+    std::cout << "Second Max of: " << secondMaxVal << " found at index: " << secondMaxIndex << std::endl;
+    std::cout << "SNR: " << 10 * std::log10( topMaxVal / secondMaxVal ) << " dB" << std::endl;
 
 
     exit( retCode );
