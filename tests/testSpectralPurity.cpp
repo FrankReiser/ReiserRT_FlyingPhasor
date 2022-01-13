@@ -1,6 +1,7 @@
 // Created on 20220111
 
 #include "FlyingPhasorToneGenerator.h"
+#include "CommandLineParser.h"
 #include <memory>
 #include <cmath>
 #include <iostream>
@@ -37,10 +38,27 @@ int main( int argc, char * argv[] )
     int retCode = 0;
 
 
-//    std::cout << "Hello Spectral Purity Test" << std::endl;
-
     std::cout << std::scientific;
     std::cout.precision(17);
+
+    // Parse potential command line. Defaults provided otherwise.
+    CommandLineParser cmdLineParser{};
+    if ( 0 != cmdLineParser.parseCommandLine(argc, argv) )
+    {
+        std::cout << "Failed parsing command line" << std::endl;
+        std::cout << "Optional Arguments are:" << std::endl;
+        std::cout << "\t--radsPerSample=<double>: The radians per sample to used." << std::endl;
+        std::cout << "\t--phase=<double>: The initial phase in radians." << std::endl;
+
+        exit( -1 );
+    }
+#if 1
+    else
+    {
+        std::cout << "Parsed: --radiansPerSample=" << cmdLineParser.getRadsPerSample()
+                  << " --phase=" << cmdLineParser.getPhase() << std::endl << std::endl;
+    }
+#endif
 
 #if 0
     double radiansPerSample = cmdLineParser.getRadsPerSample();
@@ -118,6 +136,7 @@ int main( int argc, char * argv[] )
 #endif
     }
     std::cout << "Top Max of: " << topMaxVal << " found at index: " << topMaxIndex << std::endl;
+    std::cout << "\tPhase: " << std::arg( pSpectralSeries[ topMaxIndex ] ) << std::endl;
 
     // Find the Second Maximum
     pPowerSpectrum[topMaxIndex] = 0;    // So we don't find it again
