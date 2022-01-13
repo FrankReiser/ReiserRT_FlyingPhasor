@@ -8,6 +8,7 @@
 
 using WindowPtrType = std::unique_ptr< FlyingPhasorToneGenerator::PrecisionType[] >;
 
+#if 0
 WindowPtrType blackman( size_t nSamples )
 {
     WindowPtrType w{new FlyingPhasorToneGenerator::PrecisionType[ nSamples ] };
@@ -29,6 +30,7 @@ WindowPtrType blackman( size_t nSamples )
 
     return std::move( w );
 }
+#endif
 
 int main( int argc, char * argv[] )
 {
@@ -44,26 +46,27 @@ int main( int argc, char * argv[] )
     double radiansPerSample = cmdLineParser.getRadsPerSample();
     double phi = cmdLineParser.getPhase();
 #else
-    double radiansPerSample = 1.0;
+//    double radiansPerSample = 1.0;
+    double radiansPerSample = 3 * (2*M_PI / 4096);  // Third basis function excluding DC.
     double phi = 0.0;
 #endif
 
     // Epoch size
-    size_t numSamples = 4096;
+    constexpr size_t numSamples = 4096;
 
+#if 0
     // Blackman Window of Epoch size
     auto blackmanW=blackman( numSamples );
 
-#if 0
     // For maximum view of significant digits for diagnostic purposes.
     for ( size_t i = 0; i != numSamples; ++i )
         std::cout << blackmanW[ i ] << std::endl;
 #endif
 
-    // Buffers big enough for tone generated and fft output, padded x16
-    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pToneSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples * 16 ]  };
-    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pSpectralSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples * 16 ]  };
-    std::unique_ptr< FlyingPhasorToneGenerator::PrecisionType [] > pPowerSpectrum{new FlyingPhasorToneGenerator::PrecisionType [ numSamples * 16 ]  };
+    // Buffers big enough for tone generated and fft output
+    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pToneSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples ]  };
+    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pSpectralSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples ]  };
+    std::unique_ptr< FlyingPhasorToneGenerator::PrecisionType [] > pPowerSpectrum{new FlyingPhasorToneGenerator::PrecisionType [ numSamples ]  };
     // Create a tone.
 
     // Instantiate the FlyingPhasorToneGenerator. This is what we are testing the purity of as compared to legacy methods.
@@ -72,11 +75,13 @@ int main( int argc, char * argv[] )
     // Generate the tone in the padded buffer.
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
 
+#if 0 // No Windowing
     // Multiply numSamples portion of pToneSeries by Blackman window.
     for ( size_t i=0; numSamples != i; ++i )
     {
         pToneSeries[i] *= blackmanW[i];
     }
+#endif
 
 #if 0
     for ( size_t i=0; numSamples*16 != i; ++i)
@@ -84,7 +89,7 @@ int main( int argc, char * argv[] )
 #endif
 
     fftw_plan fftwPlan;
-    fftwPlan = fftw_plan_dft_1d(int(numSamples*16),
+    fftwPlan = fftw_plan_dft_1d( int(numSamples),
             (fftw_complex *)pToneSeries.get(),
             (fftw_complex *)pSpectralSeries.get(), FFTW_FORWARD, FFTW_ESTIMATE);
 
@@ -98,7 +103,7 @@ int main( int argc, char * argv[] )
 #endif
 
     // Build the power spectrum
-    for ( size_t i=0; numSamples*16 != i; ++i )
+    for ( size_t i=0; numSamples != i; ++i )
     {
         auto mag = std::abs( pSpectralSeries[i] );
         pPowerSpectrum[i] = mag * mag;
