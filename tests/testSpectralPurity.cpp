@@ -17,20 +17,21 @@ int main( int argc, char * argv[] )
     // I am only going to test this with exact basis functions because I want to use
     // windowless, un-padded FFTs here. It's the most straight forward way at proving
     // the Flying Phase Generator Noise Floor is comparable to Legacy Methods.
-    double radiansPerSample = 3 * (2*M_PI / 4096);  // Third basis function excluding DC.
+    constexpr size_t numSamples = 4096;
+    constexpr double radiansPerFilter = (2 * M_PI / numSamples);
+    double radiansPerSample = 8 * radiansPerFilter;  // Eighth basis function excluding DC.
     double phi = 0.0;
 
     // Epoch size
-    constexpr size_t numSamples = 4096;
 
-    // Buffers big enough for tone generated and fft output
-    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pToneSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples ]  };
-    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pSpectralSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples ]  };
-    std::unique_ptr< FlyingPhasorToneGenerator::PrecisionType [] > pPowerSpectrum{new FlyingPhasorToneGenerator::PrecisionType [ numSamples ]  };
+    // Buffers big enough for tone generated, fft output and a power spectrum.
+    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pToneSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples ] };
+    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pSpectralSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples ] };
+    std::unique_ptr< FlyingPhasorToneGenerator::PrecisionType[] > pPowerSpectrum{new FlyingPhasorToneGenerator::PrecisionType [ numSamples ] };
     // Create a tone.
 
     // Instantiate the FlyingPhasorToneGenerator. This is what we are testing the purity of as compared to legacy methods.
-    std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, phi } };
+    std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{radiansPerSample, phi } };
 
     // Generate the tone in the padded buffer.
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
@@ -93,6 +94,23 @@ int main( int argc, char * argv[] )
     std::cout << "Second Max of: " << secondMaxVal << " found at index: " << secondMaxIndex << std::endl;
     std::cout << "SNR: " << 10 * std::log10( topMaxVal / secondMaxVal ) << " dB" << std::endl;
 
+#if 0
+    // Now I just want to look about the Nyquist point. Any artifacts of our re-normalization
+    // process (every other sample), should show up here.
+    constexpr size_t searchWidth = 128;
+    constexpr size_t startPoint = ( numSamples >> 1 ) - ( searchWidth >> 1 );
+    double nthVal = 0.0;
+    size_t nthIndex = -1;
+    for ( size_t i=startPoint, j=0; searchWidth != j; ++i, ++j )
+    {
+        if ( nthVal < pPowerSpectrum[i] )
+        {
+            nthVal = pPowerSpectrum[i];
+            nthIndex = i;
+        }
+    }
+    std::cout << "nth Max of: " << nthVal << " found at index: " << nthIndex << std::endl;
+#endif
 
     exit( retCode );
     return retCode;
