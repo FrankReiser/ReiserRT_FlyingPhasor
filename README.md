@@ -1,2 +1,7 @@
-# ComplexToneGen
-Complex Tone Generator
+# FlyingPhasorToneGen
+
+This Flying Phasor Tone Generator, evolved out of a desire to generate complex exponential waveforms (sinusoids) fast and accurate. The traditional way of doing this, involved repeated calls to sin and cos functions with an advancing, radian input argument. This produces accurate results, at least over a short domain interval. However, it is anything but fast.
+
+If a continual sequence of complex values are what is required for an application. The task of generating this sequence can be accomplished by rotating a phasor around the unit circle. This requires no more than multiplication and addition and a sprinkle of "state data". It is immune from domain range limits. It does not track, or care about, "cycles". The only trigonometric functions invoked are during initialization. The amount of state data maintained is minuscule. Therefore, many objects of this type can be instantiated and utilized simultaneously. Benchmarking indicates that this method is an order of magnitude faster than the traditional method. Accuracy is such that it is "almost" immeasurably worse. You be the judge.
+
+Although I cannot take credit for this algorithm. It is really just, simple mathematics. I do not know its exact origins. I consider it public domain. This implementation was derived from something I saw on Stack Exchange. What I have done is to actually utilize std::complex instead of a discrete reimplementation of complex math and turned it into a "State Machine". Lastly, I provide test harnesses that prove its worthiness. 

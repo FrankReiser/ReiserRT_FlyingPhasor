@@ -1,0 +1,20 @@
+add_executable( testInitialization "" )
+target_sources( testInitialization PRIVATE testInitialization.cpp )
+target_include_directories( testInitialization PUBLIC ../src ../testUtilities )
+target_link_libraries( testInitialization TSG_FlyingPhasorToneGen TestUtilities )
+add_test( NAME runInitializationTest COMMAND $<TARGET_FILE:testInitialization> --radsPerSample=2.0 --phase=1.5 )
+
+add_executable( testPurity "" )
+target_sources( testPurity PRIVATE testPurity.cpp)
+target_include_directories( testPurity PUBLIC ../src ../testUtilities )
+target_link_libraries( testPurity TSG_FlyingPhasorToneGen TestUtilities )
+add_test( NAME runPurityTest1 COMMAND $<TARGET_FILE:testPurity> --radsPerSample=2.0 --phase=-1.5 )
+add_test( NAME runPurityTest2 COMMAND $<TARGET_FILE:testPurity> --radsPerSample=-2.0 --phase=1.5 )
+
+# Not searching for FFTW3 package config. FFTW3 does not install cmake config files. So if it is installed,
+# it can be found. Just use it. If it is not installed, you'll find out about it soon enough.
+add_executable( testSpectralPurity "" )
+target_sources( testSpectralPurity PRIVATE testSpectralPurity.cpp)
+target_include_directories( testSpectralPurity PUBLIC ../src ../testUtilities )
+target_link_libraries( testSpectralPurity TSG_FlyingPhasorToneGen fftw3 TestUtilities )
+add_test( NAME runSpectralPurityTest COMMAND $<TARGET_FILE:testSpectralPurity> --radsPerSample=-2.0 --phase=1.5 )
