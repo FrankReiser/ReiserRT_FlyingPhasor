@@ -20,7 +20,7 @@ int main( int argc, char * argv[] )
         // A small buffer for storing two elements
         std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pElementBuf{new FlyingPhasorToneGenerator::ElementType [2] };
 
-        // Instantiate Default Complex Tone Generator (0.0 radsPerSample, 0.0 phi = pure DC)
+        // Instantiate Default Complex Tone Generator (Defaults => 0.0 radsPerSample, 0.0 phi = pure DC)
         {
             std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ } };
 
@@ -112,7 +112,7 @@ int main( int argc, char * argv[] )
             }
         }
 
-        // Instantiate Default Complex Tone Generator (-1.5 radsPerSample, 1.0 phi)
+        // Instantiate Specific Complex Tone Generator (-1.5 radsPerSample, 1.0 phi)
         {
             std::unique_ptr<FlyingPhasorToneGenerator> pFlyingPhasorToneGen{new FlyingPhasorToneGenerator{ -1.5, 1.0 }};
 
