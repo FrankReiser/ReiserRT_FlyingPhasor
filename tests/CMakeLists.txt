@@ -10,6 +10,8 @@ target_include_directories( testPurity PUBLIC ../src ../testUtilities )
 target_link_libraries( testPurity TSG_FlyingPhasorToneGen TestUtilities )
 add_test( NAME runPurityTest1 COMMAND $<TARGET_FILE:testPurity> --radsPerSample=2.0 --phase=-1.5 )
 add_test( NAME runPurityTest2 COMMAND $<TARGET_FILE:testPurity> --radsPerSample=-2.0 --phase=1.5 )
+add_test( NAME runPurityTest3 COMMAND $<TARGET_FILE:testPurity> --radsPerSample=0.25 --phase=0.0 )
+add_test( NAME runPurityTest4 COMMAND $<TARGET_FILE:testPurity> --radsPerSample=0.001 --phase=0.0 )
 
 # Not searching for FFTW3 package config. FFTW3 does not install cmake config files. So if it is installed,
 # it can be found. Just use it. If it is not installed, you'll find out about it soon enough.
