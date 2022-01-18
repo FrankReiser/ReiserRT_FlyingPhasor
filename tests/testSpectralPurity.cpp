@@ -18,23 +18,18 @@ int main( int argc, char * argv[] )
     // windowless, un-padded FFTs here. It's the most straight forward way at proving
     // the Flying Phase Generator Noise Floor is comparable to Legacy Methods.
     constexpr size_t numSamples = 4096;
-    constexpr double radiansPerFilter = (2 * M_PI / numSamples);
-    double radiansPerSample = 8 * radiansPerFilter;  // Eighth basis function excluding DC.
-    double phi = 0.0;
-
-    // Epoch size
+    constexpr double radiansPerFilter = (2 * M_PI / numSamples); // Just a fact.
 
     // Buffers big enough for tone generated, fft output and a power spectrum.
     std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pToneSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples ] };
     std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pSpectralSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples ] };
     std::unique_ptr< FlyingPhasorToneGenerator::PrecisionType[] > pPowerSpectrum{new FlyingPhasorToneGenerator::PrecisionType [ numSamples ] };
-    // Create a tone.
 
-    // Instantiate the FlyingPhasorToneGenerator. This is what we are testing the purity of as compared to legacy methods.
-    std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{radiansPerSample, phi } };
+    double radiansPerSample = 8 * radiansPerFilter;  // Eighth basis function excluding DC.
+    double phi = 0.0;
 
-    // Generate the tone in the padded buffer.
-    pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
+    // Epoch size
+
 
 #if 0
     for ( size_t i=0; numSamples*16 != i; ++i)
@@ -46,7 +41,13 @@ int main( int argc, char * argv[] )
             (fftw_complex *)pToneSeries.get(),
             (fftw_complex *)pSpectralSeries.get(), FFTW_FORWARD, FFTW_ESTIMATE);
 
+    // Instantiate the FlyingPhasorToneGenerator. This is what we are testing the purity of as compared to legacy methods.
+    std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{radiansPerSample, phi } };
+
+    // Generate the tone into the buffer.
+    pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
     fftw_execute( fftwPlan );
+
     // Done with the plan for now.
     fftw_destroy_plan( fftwPlan );
 
