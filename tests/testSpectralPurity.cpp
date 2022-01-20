@@ -6,6 +6,48 @@
 #include <iostream>
 #include <fftw3.h>
 
+constexpr size_t numSamples = 4096;
+
+struct PeakInfo
+{
+    size_t index = ~0;
+    double value = 0.0;
+};
+
+std::pair< PeakInfo, PeakInfo > findPeaks( FlyingPhasorToneGenerator::ElementType pSpectralSeries[] )
+{
+    std::unique_ptr< FlyingPhasorToneGenerator::PrecisionType[] > pPowerSpectrum{new FlyingPhasorToneGenerator::PrecisionType [ numSamples ] };
+
+    // Find the top maximum while also building a power spectrum.
+    PeakInfo topPeak;
+    for (size_t i=0; numSamples != i; ++i )
+    {
+        auto mag = std::abs( pSpectralSeries[i] );
+        if ( topPeak.value < ( pPowerSpectrum[i] = mag * mag ) )
+        {
+            topPeak.value = pPowerSpectrum[i];
+            topPeak.index = i;
+        }
+    }
+
+    // Find the second maximum
+    PeakInfo secondPeak;
+    pPowerSpectrum[ topPeak.index ] = 0;    // So we don't find it again
+    for (size_t i=0; numSamples != i; ++i )
+    {
+        if ( secondPeak.value < pPowerSpectrum[i] )
+        {
+            secondPeak.value = pPowerSpectrum[i];
+            secondPeak.index = i;
+        }
+    }
+
+    return { topPeak, secondPeak };
+}
+
+// I am only going to test this with exact basis functions because I want to use
+// windowless, un-padded FFTs. This is the most straight forward way at proving
+// the Flying Phase Generator Noise Floor is comparable to Legacy Methods.
 int main( int argc, char * argv[] )
 {
     int retCode = 0;
@@ -14,104 +56,52 @@ int main( int argc, char * argv[] )
     std::cout << std::scientific;
     std::cout.precision(17);
 
-    // I am only going to test this with exact basis functions because I want to use
-    // windowless, un-padded FFTs here. It's the most straight forward way at proving
-    // the Flying Phase Generator Noise Floor is comparable to Legacy Methods.
-    constexpr size_t numSamples = 4096;
-    constexpr double radiansPerFilter = (2 * M_PI / numSamples); // Just a fact.
-
-    // Buffers big enough for tone generated, fft output and a power spectrum.
+    // Buffers big enough for tone generated and fft output
     std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pToneSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples ] };
     std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pSpectralSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples ] };
-    std::unique_ptr< FlyingPhasorToneGenerator::PrecisionType[] > pPowerSpectrum{new FlyingPhasorToneGenerator::PrecisionType [ numSamples ] };
 
-    double radiansPerSample = 8 * radiansPerFilter;  // Eighth basis function excluding DC.
-    double phi = 0.0;
-
-    // Epoch size
-
-
-#if 0
-    for ( size_t i=0; numSamples*16 != i; ++i)
-        std::cout << pToneSeries[i].real() << " " << pToneSeries[i].imag() << std::endl;
-#endif
-
+    // FFTW wants a plan to execute. It requires the number of samples and the source and
+    // destination buffer addresses.
     fftw_plan fftwPlan;
     fftwPlan = fftw_plan_dft_1d( int(numSamples),
-            (fftw_complex *)pToneSeries.get(),
-            (fftw_complex *)pSpectralSeries.get(), FFTW_FORWARD, FFTW_ESTIMATE);
+                                 (fftw_complex *)pToneSeries.get(),
+                                 (fftw_complex *)pSpectralSeries.get(), FFTW_FORWARD, FFTW_ESTIMATE);
 
-    // Instantiate the FlyingPhasorToneGenerator. This is what we are testing the purity of as compared to legacy methods.
-    std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{radiansPerSample, phi } };
-
-    // Generate the tone into the buffer.
+    // Test case #1
+    int16_t basisFunctionUnderTest = 8; // Essentially a signed index.
+    double radiansPerSample = (basisFunctionUnderTest * 2 * M_PI ) / numSamples;
+    std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, 0.0 } };
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
     fftw_execute( fftwPlan );
+    auto peaks = findPeaks( pSpectralSeries.get() );
+    std::cout << "Top Max of: " << peaks.first.value << " found at index: " << peaks.first.index << std::endl;
+    std::cout << "Second Max of: " << peaks.second.value << " found at index: " << peaks.second.index << std::endl;
+    std::cout << "SNR: " << 10 * std::log10( peaks.first.value / peaks.second.value ) << " dB" << std::endl;
+
+    // Test case #2
+    basisFunctionUnderTest = -8;
+    radiansPerSample = ( basisFunctionUnderTest * 2 * M_PI ) / numSamples;
+    pFlyingPhasorToneGen->reset( radiansPerSample, 0.0 );
+    pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
+    fftw_execute( fftwPlan );
+    peaks = findPeaks( pSpectralSeries.get() );
+    std::cout << "Top Max of: " << peaks.first.value << " found at index: " << peaks.first.index << std::endl;
+    std::cout << "Second Max of: " << peaks.second.value << " found at index: " << peaks.second.index << std::endl;
+    std::cout << "SNR: " << 10 * std::log10( peaks.first.value / peaks.second.value ) << " dB" << std::endl;
+
+    // Test case #3
+    basisFunctionUnderTest = 1000;
+    radiansPerSample = ( basisFunctionUnderTest * 2 * M_PI ) / numSamples;
+    pFlyingPhasorToneGen->reset( radiansPerSample, 0.0 );
+    pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
+    fftw_execute( fftwPlan );
+    peaks = findPeaks( pSpectralSeries.get() );
+    std::cout << "Top Max of: " << peaks.first.value << " found at index: " << peaks.first.index << std::endl;
+    std::cout << "Second Max of: " << peaks.second.value << " found at index: " << peaks.second.index << std::endl;
+    std::cout << "SNR: " << 10 * std::log10( peaks.first.value / peaks.second.value ) << " dB" << std::endl;
 
     // Done with the plan for now.
     fftw_destroy_plan( fftwPlan );
-
-#if 0
-    for ( size_t i=0; numSamples*16 != i; ++i)
-        std::cout << pSpectralSeries[i].real() << " " << pSpectralSeries[i].imag() << std::endl;
-#endif
-
-    // Build the power spectrum and while where at it record the Top Maximum
-    double topMaxVal = 0.0;
-    size_t topMaxIndex = -1;
-    for ( size_t i=0; numSamples != i; ++i )
-    {
-        auto mag = std::abs( pSpectralSeries[i] );
-        if ( topMaxVal < ( pPowerSpectrum[i] = mag * mag ) )
-        {
-            topMaxVal = pPowerSpectrum[i];
-            topMaxIndex = i;
-        }
-#if 0
-        std::cout << pPowerSpectrum[i] << std::endl;
-#endif
-    }
-    std::cout << "Top Max of: " << topMaxVal << " found at index: " << topMaxIndex << std::endl;
-    std::cout << "\tPhase: " << std::arg( pSpectralSeries[ topMaxIndex ] ) << std::endl;
-
-    // Find the Second Maximum
-    pPowerSpectrum[topMaxIndex] = 0;    // So we don't find it again
-#if 0
-    pPowerSpectrum[1024] = 1;    // Test Signal Poke
-#endif
-    double secondMaxVal = 0.0;
-    size_t secondMaxIndex = -1;
-    for ( size_t i=0; numSamples != i; ++i )
-    {
-        if ( secondMaxVal < pPowerSpectrum[i] )
-        {
-            secondMaxVal = pPowerSpectrum[i];
-            secondMaxIndex = i;
-        }
-#if 0
-        std::cout << pPowerSpectrum[i] << std::endl;
-#endif
-    }
-    std::cout << "Second Max of: " << secondMaxVal << " found at index: " << secondMaxIndex << std::endl;
-    std::cout << "SNR: " << 10 * std::log10( topMaxVal / secondMaxVal ) << " dB" << std::endl;
-
-#if 0
-    // Now I just want to look about the Nyquist point. Any artifacts of our re-normalization
-    // process (every other sample), should show up here.
-    constexpr size_t searchWidth = 128;
-    constexpr size_t startPoint = ( numSamples >> 1 ) - ( searchWidth >> 1 );
-    double nthVal = 0.0;
-    size_t nthIndex = -1;
-    for ( size_t i=startPoint, j=0; searchWidth != j; ++i, ++j )
-    {
-        if ( nthVal < pPowerSpectrum[i] )
-        {
-            nthVal = pPowerSpectrum[i];
-            nthIndex = i;
-        }
-    }
-    std::cout << "nth Max of: " << nthVal << " found at index: " << nthIndex << std::endl;
-#endif
 
     exit( retCode );
     return retCode;
