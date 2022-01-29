@@ -8,6 +8,9 @@
 #include <algorithm>
 #include <fftw3.h>
 
+#define CONDENSE_ADJACENT_LMX_ENTRIES 1
+#define SORT_LMX_ENTRIES 1
+
 constexpr size_t epochSizePowerTwo = 12;
 constexpr size_t numSamples = 1 << epochSizePowerTwo;
 
@@ -16,12 +19,13 @@ using ScalarBufferType = std::unique_ptr< FlyingPhasorToneGenerator::PrecisionTy
 
 struct LocalMax
 {
-    LocalMax( double thePwrLevel, size_t theIndex )
-            : pwrLevel{thePwrLevel}, atIndex{theIndex}
+    LocalMax( double thePwrLevel, double theCentroid, size_t theIndex )
+            : pwrLevel{thePwrLevel}, atIndex{theIndex}, centroid{theCentroid}
     {
     }
 
     double pwrLevel{};
+    double centroid{};
     size_t atIndex{};
 };
 
@@ -88,19 +92,54 @@ public:
                 trailingNoisePower += powerSpectrum[ algIndex++ ];
             }
 
+            ///@note This breaks down at Nyquist.
+            auto centroid = [&]()
+            {
+                double spanPower = 0;
+                double productAccum = 0;
+                auto signedIndex = int32_t(cut - nGuardCells ); // We want signed here.
+                for ( uint32_t j=0; 2 * nGuardCells + 1 != j; ++j, ++signedIndex )
+                {
+                    auto jPow = powerSpectrum[ uint32_t( signedIndex & mask ) ];
+                    spanPower += jPow;
+                    productAccum += jPow * signedIndex;
+                }
+                return productAccum / spanPower;
+            };
+
             // Do we have a Local Maximum (LMX)
             auto cutPower = powerSpectrum[ cut ];
             leadingNoisePower /= nTrainingCells;
             trailingNoisePower /= nTrainingCells;
             if ( cutPower > alpha * ( leadingNoisePower + trailingNoisePower ) / 2 )
             {
-//                std::cout << "LMX @" << cut << std::endl;
-                localMaxBuffer.emplace_back( LocalMax{ cutPower, cut } );
+#if defined( CONDENSE_ADJACENT_LMX_ENTRIES ) && ( CONDENSE_ADJACENT_LMX_ENTRIES != 0 )
+                // Do we have an adjacent previously recorded LMX entry?
+                if ( !localMaxBuffer.empty() && cut -1 == localMaxBuffer.back().atIndex )
+                {
+                    auto & prevAdj = localMaxBuffer.back();
+
+                    // We're either going to throw the adjacent away, or replace the previous entry
+                    // with it. In order to replace. We need to have a hotter signal strength to replace.
+                    if ( prevAdj.pwrLevel < cutPower )
+                    {
+                        prevAdj = LocalMax{ cutPower, centroid(), cut };
+                    }
+                }
+                // Else, no adjacent, previously recorded LMX entry. This is a standalone LMX
+                // until determined otherwise. Append to the LMX buffer.
+                else
+#endif
+                {
+                    localMaxBuffer.emplace_back( LocalMax{ cutPower, centroid(), cut } );
+                }
             }
         }
 
-        // Not here.
-        //std::sort( localMaxBuffer.begin(), localMaxBuffer.end() );
+#if defined( SORT_LMX_ENTRIES ) && ( SORT_LMX_ENTRIES != 0 )
+        // Sort by Max Power Descending.
+        std::sort( localMaxBuffer.begin(), localMaxBuffer.end() );
+#endif
 
         return std::move( localMaxBuffer );
     }
@@ -204,13 +243,14 @@ int main( int argc, char * argv[] )
     double radiansPerSample = (basisFunctionUnderTest * 2 * M_PI ) / numSamples;
     std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, 0.0 } };
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
-#if 1
+
     // Multiply Epoch portion of pToneSeries by Blackman window.
     for ( size_t i=0; numSamples != i; ++i )
     {
         pToneSeries[i] *= bWnd[i];
     }
-#endif
+
+    // Perform FFT
     fftw_execute( fftwPlan );
 #if 1
     // Create a Power Spectrum from the Complex Magnitude. Note we're x2 expanded here due to zero padding.
@@ -219,7 +259,6 @@ int main( int argc, char * argv[] )
         auto mag = std::abs( pSpectralSeries[i] );
         pPowerSpectrum[i] = mag * mag;
     }
-
 #if 0
     for ( size_t i=8; 24 != i; ++i )
         std::cout << "Power Spec[" << i << "] = " << pPowerSpectrum[i] << std::endl;
@@ -240,7 +279,7 @@ int main( int argc, char * argv[] )
     auto lmxTable = std::move( cfarAlgorithm.run( pPowerSpectrum ) );
     for ( auto & lmx : lmxTable )
     {
-        std::cout << "LMX @" << lmx.atIndex << ", powerLvl: " << lmx.pwrLevel << std::endl;
+        std::cout << "LMX @" << lmx.atIndex << ", powerLvl: " << lmx.pwrLevel << ", centroid: " << lmx.centroid << std::endl;
     }
 
 #if 0
