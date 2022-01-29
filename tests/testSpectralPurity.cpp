@@ -10,6 +10,7 @@
 
 #define CONDENSE_ADJACENT_LMX_ENTRIES 1
 #define SORT_LMX_ENTRIES 1
+#define GENERATE_CFAR_TEST_TONE 1
 
 constexpr size_t epochSizePowerTwo = 12;
 constexpr size_t numSamples = 1 << epochSizePowerTwo;
@@ -97,6 +98,7 @@ public:
             {
                 double spanPower = 0;
                 double productAccum = 0;
+                ///@todo This is NOT handling Signage Correctly. Think I am going too have to resurrect the shift logic.
                 auto signedIndex = int32_t(cut - nGuardCells ); // We want signed here.
                 for ( uint32_t j=0; 2 * nGuardCells + 1 != j; ++j, ++signedIndex )
                 {
@@ -227,6 +229,9 @@ int main( int argc, char * argv[] )
     ComplexBufferType pToneSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples * 2 ] };
     ComplexBufferType pSpectralSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples * 2 ] };
     ScalarBufferType pPowerSpectrum{new FlyingPhasorToneGenerator::PrecisionType [ numSamples * 2 ] };
+#if defined( GENERATE_CFAR_TEST_TONE ) && ( GENERATE_CFAR_TEST_TONE != 0 )
+    ComplexBufferType pToneSeries2{new FlyingPhasorToneGenerator::ElementType [ numSamples * 2 ] };
+#endif
 
     // Blackman Window of Epoch size
     auto bWnd = blackman( numSamples );
@@ -243,6 +248,17 @@ int main( int argc, char * argv[] )
     double radiansPerSample = (basisFunctionUnderTest * 2 * M_PI ) / numSamples;
     std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, 0.0 } };
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
+
+#if defined( GENERATE_CFAR_TEST_TONE ) && ( GENERATE_CFAR_TEST_TONE != 0 )
+    ///@todo Ideally, this would utilize a legacy tone generator. But we're only taking 1e-6 from it.
+    double testToneRadiansPerSample = ( -0.45 * 2 * M_PI );   // FOR NOW.
+    pFlyingPhasorToneGen->reset( testToneRadiansPerSample, 0.0 );
+    pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries2.get() );
+    for ( size_t i=0; i != numSamples; ++i )
+    {
+        pToneSeries[i] += pToneSeries2[i] / 1e6;
+    }
+#endif
 
     // Multiply Epoch portion of pToneSeries by Blackman window.
     for ( size_t i=0; numSamples != i; ++i )
