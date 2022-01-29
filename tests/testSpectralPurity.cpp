@@ -50,6 +50,7 @@ public:
       , mask( numElements - 1 )
       , nTrainingCells( numTrainingCells )
       , nGuardCells( numGuardCells )
+      , shift( sizeof( mask ) * 8 - powerOfTwo )
       , alpha( threshold )
     {
     }
@@ -99,7 +100,7 @@ public:
                 double spanPower = 0;
                 double productAccum = 0;
                 ///@todo This is NOT handling Signage Correctly. Think I am going too have to resurrect the shift logic.
-                auto signedIndex = int32_t(cut - nGuardCells ); // We want signed here.
+                auto signedIndex = int32_t((cut << shift) - (nGuardCells << shift)) >> shift; // We want signed here.
                 for ( uint32_t j=0; 2 * nGuardCells + 1 != j; ++j, ++signedIndex )
                 {
                     auto jPow = powerSpectrum[ uint32_t( signedIndex & mask ) ];
@@ -151,6 +152,7 @@ private:
     const uint32_t mask;
     const uint32_t nTrainingCells;
     const uint32_t nGuardCells;
+    const size_t shift;
     const double alpha;
 
 };
