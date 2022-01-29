@@ -8,9 +8,9 @@
 #include <algorithm>
 #include <fftw3.h>
 
-#define CONDENSE_ADJACENT_LMX_ENTRIES 1
+#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 1
 #define SORT_LMX_ENTRIES 1
-#define GENERATE_CFAR_TEST_TONE 1
+#define GENERATE_CFAR_TEST_TONE 0
 
 constexpr size_t epochSizePowerTwo = 12;
 constexpr size_t numSamples = 1 << epochSizePowerTwo;
@@ -116,7 +116,7 @@ public:
             trailingNoisePower /= nTrainingCells;
             if ( cutPower > alpha * ( leadingNoisePower + trailingNoisePower ) / 2 )
             {
-#if defined( CONDENSE_ADJACENT_LMX_ENTRIES ) && ( CONDENSE_ADJACENT_LMX_ENTRIES != 0 )
+#if defined( CONSOLIDATE_ADJACENT_LMX_ENTRIES ) && ( CONSOLIDATE_ADJACENT_LMX_ENTRIES != 0 )
                 // Do we have an adjacent previously recorded LMX entry?
                 if ( !localMaxBuffer.empty() && cut -1 == localMaxBuffer.back().atIndex )
                 {
@@ -252,13 +252,15 @@ int main( int argc, char * argv[] )
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
 
 #if defined( GENERATE_CFAR_TEST_TONE ) && ( GENERATE_CFAR_TEST_TONE != 0 )
-    ///@todo Ideally, this would utilize a legacy tone generator. But we're only taking 1e-6 from it.
-    double testToneRadiansPerSample = ( -0.45 * 2 * M_PI );   // FOR NOW.
+    ///@todo Ideally, this would utilize a legacy tone generator. But we're only taking a fraction from it.
+//    double testToneRadiansPerSample = ( -0.45 * 2 * M_PI );   // FOR NOW.
+    double testToneRadiansPerSample = -radiansPerSample;   // FOR NOW.
     pFlyingPhasorToneGen->reset( testToneRadiansPerSample, 0.0 );
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries2.get() );
     for ( size_t i=0; i != numSamples; ++i )
     {
-        pToneSeries[i] += pToneSeries2[i] / 1e6;
+//        pToneSeries[i] += pToneSeries2[i] / 1e3;    // 20log(1e-3) = -60ddB
+        pToneSeries[i] += pToneSeries2[i] / 1e4;    // 20log(1e-4) = -80ddB
     }
 #endif
 
@@ -292,8 +294,11 @@ int main( int argc, char * argv[] )
     // nT:5 nG:2 Thresh:5.0 works damned well.
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.2 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
-    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.8 };
+//    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
+//    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.5 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.0 };
+    // We are willing to get some false alarms out of this algorithm. We are almost counting on it.
+    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.75 };
     auto lmxTable = std::move( cfarAlgorithm.run( pPowerSpectrum ) );
     for ( auto & lmx : lmxTable )
     {
