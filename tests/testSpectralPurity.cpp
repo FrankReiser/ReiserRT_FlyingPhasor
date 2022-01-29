@@ -216,9 +216,6 @@ std::pair< PeakInfo, PeakInfo > findPeaks( FlyingPhasorToneGenerator::ElementTyp
     return { topPeak, secondPeak };
 }
 
-// I am only going to test this with exact basis functions because I want to use
-// windowless, un-padded FFTs. This is the most straight forward way at proving
-// the Flying Phase Generator Noise Floor is comparable to Legacy Methods.
 int main( int argc, char * argv[] )
 {
     int retCode = 0;
@@ -259,8 +256,8 @@ int main( int argc, char * argv[] )
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries2.get() );
     for ( size_t i=0; i != numSamples; ++i )
     {
-//        pToneSeries[i] += pToneSeries2[i] / 1e3;    // 20log(1e-3) = -60ddB
-        pToneSeries[i] += pToneSeries2[i] / 1e4;    // 20log(1e-4) = -80ddB
+        pToneSeries[i] += pToneSeries2[i] / 1e3;    // 20log(1e-3) = -60ddB
+//        pToneSeries[i] += pToneSeries2[i] / 1e4;    // 20log(1e-4) = -80ddB
     }
 #endif
 
