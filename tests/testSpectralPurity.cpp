@@ -1,6 +1,7 @@
 // Created on 20220111
 
 #include "FlyingPhasorToneGenerator.h"
+#include "CommandLineParser.h"
 #include <memory>
 #include <cmath>
 #include <iostream>
@@ -118,7 +119,8 @@ public:
             {
 #if defined( CONSOLIDATE_ADJACENT_LMX_ENTRIES ) && ( CONSOLIDATE_ADJACENT_LMX_ENTRIES != 0 )
                 // Do we have an adjacent previously recorded LMX entry?
-                if ( !localMaxBuffer.empty() && cut -1 == localMaxBuffer.back().atIndex )
+                if ( !localMaxBuffer.empty() && ( cut -1 == localMaxBuffer.back().atIndex ||
+                    cut -2 == localMaxBuffer.back().atIndex ) )
                 {
                     auto & prevAdj = localMaxBuffer.back();
 
@@ -224,6 +226,27 @@ int main( int argc, char * argv[] )
     std::cout << std::scientific;
     std::cout.precision(17);
 
+    // Parse potential command line. Defaults provided otherwise.
+    CommandLineParser cmdLineParser{};
+    if ( 0 != cmdLineParser.parseCommandLine(argc, argv) )
+    {
+        std::cout << "Failed parsing command line" << std::endl;
+        std::cout << "Optional Arguments are:" << std::endl;
+        std::cout << "\t--radsPerSample=<double>: The radians per sample to used." << std::endl;
+        std::cout << "\t--phase=<double>: The initial phase in radians." << std::endl;
+
+        exit( -1 );
+    }
+#if 1
+    else
+    {
+        std::cout << "Parsed: --radiansPerSample=" << cmdLineParser.getRadsPerSample()
+                  << " --phase=" << cmdLineParser.getPhase() << std::endl << std::endl;
+    }
+#endif
+    double radiansPerSample = cmdLineParser.getRadsPerSample();
+    double phi = cmdLineParser.getPhase();
+
     // Buffers big enough for tone generated and fft output, we are going use x2 zero padding
     ComplexBufferType pToneSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples * 2 ] };
     ComplexBufferType pSpectralSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples * 2 ] };
@@ -243,21 +266,24 @@ int main( int argc, char * argv[] )
                                  (fftw_complex *)pSpectralSeries.get(), FFTW_FORWARD, FFTW_ESTIMATE);
 
     // Test case #1
-    int16_t basisFunctionUnderTest = 8; // Essentially a signed index.
-    double radiansPerSample = (basisFunctionUnderTest * 2 * M_PI ) / numSamples;
-    std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, 0.0 } };
+//    int16_t basisFunctionUnderTest = 8; // Essentially a signed index.
+//    double radiansPerSample = (basisFunctionUnderTest * 2 * M_PI ) / numSamples;
+    std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, phi } };
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
 
 #if defined( GENERATE_CFAR_TEST_TONE ) && ( GENERATE_CFAR_TEST_TONE != 0 )
     ///@todo Ideally, this would utilize a legacy tone generator. But we're only taking a fraction from it.
 //    double testToneRadiansPerSample = ( -0.45 * 2 * M_PI );   // FOR NOW.
-    double testToneRadiansPerSample = -radiansPerSample;   // FOR NOW.
-    pFlyingPhasorToneGen->reset( testToneRadiansPerSample, 0.0 );
+//    double testToneRadiansPerSample = -radiansPerSample;   // FOR NOW.
+//    pFlyingPhasorToneGen->reset( testToneRadiansPerSample, 0.0 );
+    pFlyingPhasorToneGen->reset( -radiansPerSample, -phi );
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries2.get() );
     for ( size_t i=0; i != numSamples; ++i )
     {
-        pToneSeries[i] += pToneSeries2[i] / 1e3;    // 20log(1e-3) = -60ddB
-//        pToneSeries[i] += pToneSeries2[i] / 1e4;    // 20log(1e-4) = -80ddB
+//        pToneSeries[i] += pToneSeries2[i] / 1e3;    // 20log(1e-3) = -60dB
+//        pToneSeries[i] += pToneSeries2[i] / 1e4;    // 20log(1e-4) = -80dB
+//        pToneSeries[i] += pToneSeries2[i] / 1e5;    // 20log(1e-5) = -100dB
+        pToneSeries[i] += pToneSeries2[i] / 1e6;    // 20log(1e-6) = -120dB
     }
 #endif
 
@@ -271,11 +297,20 @@ int main( int argc, char * argv[] )
     fftw_execute( fftwPlan );
 #if 1
     // Create a Power Spectrum from the Complex Magnitude. Note we're x2 expanded here due to zero padding.
+    // While we are at it, build a noise floor from the average per filter.
+    double noiseFloor{};
+    size_t noiseElements{};
     for ( size_t i=0; numSamples * 2 != i; ++i )
     {
         auto mag = std::abs( pSpectralSeries[i] );
-        pPowerSpectrum[i] = mag * mag;
+        if ( 1.0 > ( pPowerSpectrum[i] = mag * mag ) )
+        {
+            noiseFloor += pPowerSpectrum[i];
+            ++noiseElements;
+        }
+        noiseFloor /= double( noiseElements );
     }
+    std::cout << "Noise Floor Estimate: " << noiseFloor << std::endl;
 #if 0
     for ( size_t i=8; 24 != i; ++i )
         std::cout << "Power Spec[" << i << "] = " << pPowerSpectrum[i] << std::endl;
@@ -293,9 +328,11 @@ int main( int argc, char * argv[] )
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.5 };
-//    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.0 };
+    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.0 };
     // We are willing to get some false alarms out of this algorithm. We are almost counting on it.
-    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.75 };
+//    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.75 };
+//    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.30 };
+//    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 1.800 };
     auto lmxTable = std::move( cfarAlgorithm.run( pPowerSpectrum ) );
     for ( auto & lmx : lmxTable )
     {
