@@ -343,8 +343,8 @@ int main( int argc, char * argv[] )
             << ", powerLvl: " << lmx.pwrLevel
             << ", centroid: " << lmx.centroid
 //            << ", radiansPerSample" << lmx.centroid / 4 * radiansPerSample
-            << ", radiansPerSample: " << 2 * M_PI / numSamples * lmx.centroid / 2
-            << std::endl;
+            << ", radiansPerSample: " << 2 * M_PI * lmx.centroid / 2 / numSamples
+                << std::endl;
     }
 
 #if 0
