@@ -264,6 +264,7 @@ int main( int argc, char * argv[] )
     for ( size_t i=0; numSamples * 2 != i; ++i )
     {
         auto mag = std::abs( pSpectralSeries[i] );
+#if 0
         // NOTE: This is somewhat arbitrary. We know we have high quality signals. We want to exclude
         // windowing tail regions around actual signal spectra.
         if ( 1e-3 > ( pPowerSpectrum[i] = mag * mag ) )
@@ -271,6 +272,10 @@ int main( int argc, char * argv[] )
             noiseFloor += pPowerSpectrum[i];
             ++noiseElements;
         }
+#else
+        noiseFloor += pPowerSpectrum[i] = mag * mag;
+        ++noiseElements;
+#endif
     }
     if ( !noiseElements ) ++noiseElements;
     noiseFloor /= double( noiseElements );
@@ -291,6 +296,15 @@ int main( int argc, char * argv[] )
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.30 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 1.800 };
     auto lmxTable = std::move( cfarAlgorithm.run( pPowerSpectrum ) );
+    // Window out LMXs from the noise floor estimation.
+    for ( auto & lmx : lmxTable )
+    {
+        auto algIndex = uint32_t( lmx.atIndex - ( 30 ) ) & (numSamples * 2 - 1);
+        for ( uint32_t i=0; 30*2+1 != i; ++i )
+        {
+
+        }
+    }
     for ( auto & lmx : lmxTable )
     {
         std::cout << "LMX @" << lmx.atIndex
@@ -299,6 +313,8 @@ int main( int argc, char * argv[] )
             << ", radiansPerSample: " << 2 * M_PI * lmx.centroid / 2 / numSamples
                 << std::endl;
     }
+
+
 
     // Done with the plan for now.
     fftw_destroy_plan( fftwPlan );
