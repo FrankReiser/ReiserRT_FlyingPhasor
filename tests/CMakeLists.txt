@@ -22,4 +22,4 @@ target_link_libraries( testSpectralPurity TSG_FlyingPhasorToneGen fftw3 TestUtil
 add_test( NAME runSpectralPurityTest1 COMMAND $<TARGET_FILE:testSpectralPurity> --radsPerSample=1.0 --phase=0.0 )
 add_test( NAME runSpectralPurityTest2 COMMAND $<TARGET_FILE:testSpectralPurity> --radsPerSample=2.0 --phase=-1.5 )
 add_test( NAME runSpectralPurityTest3 COMMAND $<TARGET_FILE:testSpectralPurity> --radsPerSample=0.25 --phase=0.0 )
-add_test( NAME runSpectralPurityTest4 COMMAND $<TARGET_FILE:testSpectralPurity> --radsPerSample=0.001 --phase=0.0 )
+add_test( NAME runSpectralPurityTest4 COMMAND $<TARGET_FILE:testSpectralPurity> --radsPerSample=0.0125 --phase=0.0 )

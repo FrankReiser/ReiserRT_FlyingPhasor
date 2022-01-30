@@ -303,14 +303,17 @@ int main( int argc, char * argv[] )
     for ( size_t i=0; numSamples * 2 != i; ++i )
     {
         auto mag = std::abs( pSpectralSeries[i] );
-        if ( 1.0 > ( pPowerSpectrum[i] = mag * mag ) )
+        // NOTE: This is somewhat arbitrary. We know we have high quality signals. We want to exclude
+        // windowing tail regions around actual signal spectra.
+        if ( 1e-3 > ( pPowerSpectrum[i] = mag * mag ) )
         {
             noiseFloor += pPowerSpectrum[i];
             ++noiseElements;
         }
-        noiseFloor /= double( noiseElements );
     }
-    std::cout << "Noise Floor Estimate: " << noiseFloor << std::endl;
+    if ( !noiseElements ) ++noiseElements;
+    noiseFloor /= double( noiseElements );
+    std::cout << "Noise Floor Estimate: " << noiseFloor << ", Noise Floor Elements: " << noiseElements << std::endl;
 #if 0
     for ( size_t i=8; 24 != i; ++i )
         std::cout << "Power Spec[" << i << "] = " << pPowerSpectrum[i] << std::endl;
@@ -336,7 +339,12 @@ int main( int argc, char * argv[] )
     auto lmxTable = std::move( cfarAlgorithm.run( pPowerSpectrum ) );
     for ( auto & lmx : lmxTable )
     {
-        std::cout << "LMX @" << lmx.atIndex << ", powerLvl: " << lmx.pwrLevel << ", centroid: " << lmx.centroid << std::endl;
+        std::cout << "LMX @" << lmx.atIndex
+            << ", powerLvl: " << lmx.pwrLevel
+            << ", centroid: " << lmx.centroid
+//            << ", radiansPerSample" << lmx.centroid / 4 * radiansPerSample
+            << ", radiansPerSample: " << 2 * M_PI / numSamples * lmx.centroid / 2
+            << std::endl;
     }
 
 #if 0
