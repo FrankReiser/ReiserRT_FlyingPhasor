@@ -181,43 +181,6 @@ ScalarBufferType blackman( size_t nSamples )
     return std::move( w );
 }
 
-struct PeakInfo
-{
-    size_t index = ~0;
-    double value = 0.0;
-};
-
-std::pair< PeakInfo, PeakInfo > findPeaks( FlyingPhasorToneGenerator::ElementType pSpectralSeries[] )
-{
-    std::unique_ptr< FlyingPhasorToneGenerator::PrecisionType[] > pPowerSpectrum{new FlyingPhasorToneGenerator::PrecisionType [ numSamples ] };
-
-    // Find the top maximum while also building a power spectrum.
-    PeakInfo topPeak;
-    for (size_t i=0; numSamples != i; ++i )
-    {
-        auto mag = std::abs( pSpectralSeries[i] );
-        if ( topPeak.value < ( pPowerSpectrum[i] = mag * mag ) )
-        {
-            topPeak.value = pPowerSpectrum[i];
-            topPeak.index = i;
-        }
-    }
-
-    // Find the second maximum
-    PeakInfo secondPeak;
-    pPowerSpectrum[ topPeak.index ] = 0;    // So we don't find it again
-    for (size_t i=0; numSamples != i; ++i )
-    {
-        if ( secondPeak.value < pPowerSpectrum[i] )
-        {
-            secondPeak.value = pPowerSpectrum[i];
-            secondPeak.index = i;
-        }
-    }
-
-    return { topPeak, secondPeak };
-}
-
 int main( int argc, char * argv[] )
 {
     int retCode = 0;
@@ -265,9 +228,7 @@ int main( int argc, char * argv[] )
                                  (fftw_complex *)pToneSeries.get(),
                                  (fftw_complex *)pSpectralSeries.get(), FFTW_FORWARD, FFTW_ESTIMATE);
 
-    // Test case #1
-//    int16_t basisFunctionUnderTest = 8; // Essentially a signed index.
-//    double radiansPerSample = (basisFunctionUnderTest * 2 * M_PI ) / numSamples;
+    // Instantiate Tone Generator
     std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, phi } };
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
 
@@ -295,7 +256,7 @@ int main( int argc, char * argv[] )
 
     // Perform FFT
     fftw_execute( fftwPlan );
-#if 1
+
     // Create a Power Spectrum from the Complex Magnitude. Note we're x2 expanded here due to zero padding.
     // While we are at it, build a noise floor from the average per filter.
     double noiseFloor{};
@@ -319,20 +280,13 @@ int main( int argc, char * argv[] )
         std::cout << "Power Spec[" << i << "] = " << pPowerSpectrum[i] << std::endl;
 #endif
 
-#else
-    auto peaks = findPeaks( pSpectralSeries.get() );
-    std::cout << "Top Max of: " << peaks.first.value << " found at index: " << peaks.first.index << std::endl;
-    std::cout << "Second Max of: " << peaks.second.value << " found at index: " << peaks.second.index << std::endl;
-    std::cout << "SNR: " << 10 * std::log10( peaks.first.value / peaks.second.value ) << " dB" << std::endl;
-#endif
-
     // nT:5 nG:2 Thresh:5.0 works damned well.
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.2 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.5 };
     CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.0 };
-    // We are willing to get some false alarms out of this algorithm. We are almost counting on it.
+    // We are willing to get some false alarms out of this algorithm. We are almost counting on it. Er, NO, do NOT
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.75 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.30 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 1.800 };
@@ -342,35 +296,9 @@ int main( int argc, char * argv[] )
         std::cout << "LMX @" << lmx.atIndex
             << ", powerLvl: " << lmx.pwrLevel
             << ", centroid: " << lmx.centroid
-//            << ", radiansPerSample" << lmx.centroid / 4 * radiansPerSample
             << ", radiansPerSample: " << 2 * M_PI * lmx.centroid / 2 / numSamples
                 << std::endl;
     }
-
-#if 0
-
-    // Test case #2
-    basisFunctionUnderTest = -8;
-    radiansPerSample = ( basisFunctionUnderTest * 2 * M_PI ) / numSamples;
-    pFlyingPhasorToneGen->reset( radiansPerSample, 0.0 );
-    pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
-    fftw_execute( fftwPlan );
-    peaks = findPeaks( pSpectralSeries.get() );
-    std::cout << "Top Max of: " << peaks.first.value << " found at index: " << peaks.first.index << std::endl;
-    std::cout << "Second Max of: " << peaks.second.value << " found at index: " << peaks.second.index << std::endl;
-    std::cout << "SNR: " << 10 * std::log10( peaks.first.value / peaks.second.value ) << " dB" << std::endl;
-
-    // Test case #3
-    basisFunctionUnderTest = 1000;
-    radiansPerSample = ( basisFunctionUnderTest * 2 * M_PI ) / numSamples;
-    pFlyingPhasorToneGen->reset( radiansPerSample, 0.0 );
-    pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries.get() );
-    fftw_execute( fftwPlan );
-    peaks = findPeaks( pSpectralSeries.get() );
-    std::cout << "Top Max of: " << peaks.first.value << " found at index: " << peaks.first.index << std::endl;
-    std::cout << "Second Max of: " << peaks.second.value << " found at index: " << peaks.second.index << std::endl;
-    std::cout << "SNR: " << 10 * std::log10( peaks.first.value / peaks.second.value ) << " dB" << std::endl;
-#endif
 
     // Done with the plan for now.
     fftw_destroy_plan( fftwPlan );
