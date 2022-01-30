@@ -74,8 +74,8 @@ public:
                 if ( cut == ( mask >> 1 ) ) std::cout << "\tCUT: " << cut << " Bottom Half Filter algIndex: " << algIndex << std::endl;
                 if ( cut == mask ) std::cout << "\tCUT: " << cut << " Bottom Half Filter algIndex: " << algIndex << std::endl;
 #endif
+                leadingNoisePower += powerSpectrum[ algIndex ];
                 ++algIndex &= mask;
-                leadingNoisePower += powerSpectrum[ algIndex++ ];
             }
 
             // Skip over Upper and Lower Guard Cells and the CUT index itself. Well get
@@ -91,8 +91,8 @@ public:
                 if ( cut == ( mask >> 1 ) ) std::cout << "\tCUT: " << cut << " Upper Half Filter algIndex: " << algIndex << std::endl;
                 if ( cut == mask ) std::cout << "\tCUT: " << cut << " Upper Half Filter algIndex: " << algIndex << std::endl;
 #endif
+                trailingNoisePower += powerSpectrum[ algIndex ];
                 ++algIndex &= mask;
-                trailingNoisePower += powerSpectrum[ algIndex++ ];
             }
 
             ///@note This breaks down at Nyquist.
@@ -234,17 +234,18 @@ int main( int argc, char * argv[] )
 
 #if defined( GENERATE_CFAR_TEST_TONE ) && ( GENERATE_CFAR_TEST_TONE != 0 )
     ///@todo Ideally, this would utilize a legacy tone generator. But we're only taking a fraction from it.
-//    double testToneRadiansPerSample = ( -0.45 * 2 * M_PI );   // FOR NOW.
-//    double testToneRadiansPerSample = -radiansPerSample;   // FOR NOW.
-//    pFlyingPhasorToneGen->reset( testToneRadiansPerSample, 0.0 );
-    pFlyingPhasorToneGen->reset( -radiansPerSample, -phi );
+//    pFlyingPhasorToneGen->reset( -radiansPerSample, -phi );
+    pFlyingPhasorToneGen->reset( radiansPerSample + M_PI / 2.0, 0.0 );
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries2.get() );
     for ( size_t i=0; i != numSamples; ++i )
     {
 //        pToneSeries[i] += pToneSeries2[i] / 1e3;    // 20log(1e-3) = -60dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e4;    // 20log(1e-4) = -80dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e5;    // 20log(1e-5) = -100dB
-        pToneSeries[i] += pToneSeries2[i] / 1e6;    // 20log(1e-6) = -120dB
+//        pToneSeries[i] += pToneSeries2[i] / 1e6;    // 20log(1e-6) = -120dB
+//        pToneSeries[i] += pToneSeries2[i] / 1e7;    // 20log(1e-6) = -140dB
+//        pToneSeries[i] += pToneSeries2[i] / 1e8;    // 20log(1e-6) = -160dB
+        pToneSeries[i] += pToneSeries2[i] / 1e9;    // 20log(1e-6) = -180dB
     }
 #endif
 
@@ -277,9 +278,9 @@ int main( int argc, char * argv[] )
         ++noiseElements;
 #endif
     }
-    if ( !noiseElements ) ++noiseElements;
-    noiseFloor /= double( noiseElements );
-    std::cout << "Noise Floor Estimate: " << noiseFloor << ", Noise Floor Elements: " << noiseElements << std::endl;
+//    if ( !noiseElements ) ++noiseElements;
+//    noiseFloor /= double( noiseElements );
+//    std::cout << "Noise Floor Estimate: " << noiseFloor << ", Noise Floor Elements: " << noiseElements << std::endl;
 #if 0
     for ( size_t i=8; 24 != i; ++i )
         std::cout << "Power Spec[" << i << "] = " << pPowerSpectrum[i] << std::endl;
@@ -290,7 +291,7 @@ int main( int argc, char * argv[] )
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.5 };
-    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.0 };
+    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 6, 2, 7.5 };
     // We are willing to get some false alarms out of this algorithm. We are almost counting on it. Er, NO, do NOT
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.75 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.30 };
@@ -302,9 +303,19 @@ int main( int argc, char * argv[] )
         auto algIndex = uint32_t( lmx.atIndex - ( 30 ) ) & (numSamples * 2 - 1);
         for ( uint32_t i=0; 30*2+1 != i; ++i )
         {
-
+            auto & p = pPowerSpectrum[ algIndex ];
+            if ( p != 0.0 )
+            {
+                noiseFloor -= p;
+                p = 0.0;           // We do not want to possibly get it again on another LMX.
+                --noiseElements;
+            }
+            ++algIndex &= (numSamples * 2 - 1);
         }
     }
+    if ( !noiseElements ) ++noiseElements;
+    noiseFloor /= double( noiseElements );
+    std::cout << "New Noise Floor Estimate: " << noiseFloor << ", Noise Floor Elements: " << noiseElements << std::endl;
     for ( auto & lmx : lmxTable )
     {
         std::cout << "LMX @" << lmx.atIndex
