@@ -9,9 +9,9 @@
 #include <algorithm>
 #include <fftw3.h>
 
-#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 0
+#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 1
 #define SORT_LMX_ENTRIES 1
-#define GENERATE_CFAR_TEST_TONE 1
+#define GENERATE_CFAR_TEST_TONE 0
 
 constexpr size_t epochSizePowerTwo = 12;
 constexpr size_t numSamples = 1 << epochSizePowerTwo;
@@ -244,8 +244,8 @@ int main( int argc, char * argv[] )
 //        pToneSeries[i] += pToneSeries2[i] / 1e5;    // 20log(1e-5) = -100dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e6;    // 20log(1e-6) = -120dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e7;    // 20log(1e-6) = -140dB
-        pToneSeries[i] += pToneSeries2[i] / 1e8;    // 20log(1e-6) = -160dB
-//        pToneSeries[i] += pToneSeries2[i] / 1e9;    // 20log(1e-6) = -180dB
+        pToneSeries[i] += pToneSeries2[i] / 1e8;    // 20log(1e-8) = -160dB
+//        pToneSeries[i] += pToneSeries2[i] / 1e9;    // 20log(1e-9) = -180dB
     }
 #endif
 
