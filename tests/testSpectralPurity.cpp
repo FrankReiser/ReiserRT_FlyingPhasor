@@ -9,9 +9,9 @@
 #include <algorithm>
 #include <fftw3.h>
 
-#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 1
+#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 0
 #define SORT_LMX_ENTRIES 1
-#define GENERATE_CFAR_TEST_TONE 0
+#define GENERATE_CFAR_TEST_TONE 1
 
 constexpr size_t epochSizePowerTwo = 12;
 constexpr size_t numSamples = 1 << epochSizePowerTwo;
@@ -235,7 +235,7 @@ int main( int argc, char * argv[] )
 #if defined( GENERATE_CFAR_TEST_TONE ) && ( GENERATE_CFAR_TEST_TONE != 0 )
     ///@todo Ideally, this would utilize a legacy tone generator. But we're only taking a fraction from it.
 //    pFlyingPhasorToneGen->reset( -radiansPerSample, -phi );
-    pFlyingPhasorToneGen->reset( radiansPerSample + M_PI / 2.0, 0.0 );
+    pFlyingPhasorToneGen->reset( radiansPerSample + M_PI / 4.0, 0.0 );
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries2.get() );
     for ( size_t i=0; i != numSamples; ++i )
     {
@@ -244,12 +244,12 @@ int main( int argc, char * argv[] )
 //        pToneSeries[i] += pToneSeries2[i] / 1e5;    // 20log(1e-5) = -100dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e6;    // 20log(1e-6) = -120dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e7;    // 20log(1e-6) = -140dB
-//        pToneSeries[i] += pToneSeries2[i] / 1e8;    // 20log(1e-6) = -160dB
-        pToneSeries[i] += pToneSeries2[i] / 1e9;    // 20log(1e-6) = -180dB
+        pToneSeries[i] += pToneSeries2[i] / 1e8;    // 20log(1e-6) = -160dB
+//        pToneSeries[i] += pToneSeries2[i] / 1e9;    // 20log(1e-6) = -180dB
     }
 #endif
 
-    // Multiply Epoch portion of pToneSeries by Blackman window.
+    // Multiply Epoch portion (x1, it's x2 padded) of pToneSeries by Blackman window.
     for ( size_t i=0; numSamples != i; ++i )
     {
         pToneSeries[i] *= bWnd[i];
@@ -259,24 +259,13 @@ int main( int argc, char * argv[] )
     fftw_execute( fftwPlan );
 
     // Create a Power Spectrum from the Complex Magnitude. Note we're x2 expanded here due to zero padding.
-    // While we are at it, build a noise floor from the average per filter.
+    // While we are at it, build a start our noise floor work by totaling the total power.
     double noiseFloor{};
     size_t noiseElements{};
-    for ( size_t i=0; numSamples * 2 != i; ++i )
+    for ( size_t i=0; numSamples * 2 != i; ++i, ++noiseElements )
     {
         auto mag = std::abs( pSpectralSeries[i] );
-#if 0
-        // NOTE: This is somewhat arbitrary. We know we have high quality signals. We want to exclude
-        // windowing tail regions around actual signal spectra.
-        if ( 1e-3 > ( pPowerSpectrum[i] = mag * mag ) )
-        {
-            noiseFloor += pPowerSpectrum[i];
-            ++noiseElements;
-        }
-#else
         noiseFloor += pPowerSpectrum[i] = mag * mag;
-        ++noiseElements;
-#endif
     }
 //    if ( !noiseElements ) ++noiseElements;
 //    noiseFloor /= double( noiseElements );
@@ -291,7 +280,7 @@ int main( int argc, char * argv[] )
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.5 };
-    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 6, 2, 7.5 };
+    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 6, 3, 25.0 };
     // We are willing to get some false alarms out of this algorithm. We are almost counting on it. Er, NO, do NOT
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.75 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.30 };
