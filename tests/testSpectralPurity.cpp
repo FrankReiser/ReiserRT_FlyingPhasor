@@ -9,9 +9,9 @@
 #include <algorithm>
 #include <fftw3.h>
 
-#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 1
+#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 0
 #define SORT_LMX_ENTRIES 1
-#define GENERATE_CFAR_TEST_TONE 0
+#define GENERATE_CFAR_TEST_TONE 1
 
 constexpr size_t epochSizePowerTwo = 12;
 constexpr size_t numSamples = 1 << epochSizePowerTwo;
@@ -95,12 +95,12 @@ public:
                 ++algIndex &= mask;
             }
 
-            ///@note This breaks down at Nyquist.
+            ///@note This breaks down at Nyquist. The centroid may lean positive, indicating just beyond Nyquist.
+            ///Fixing this is problematic as this is a cusp between positive and negative frequencies.
             auto centroid = [&]()
             {
                 double spanPower = 0;
                 double productAccum = 0;
-                ///@todo This is NOT handling Signage Correctly. Think I am going too have to resurrect the shift logic.
                 auto signedIndex = int32_t((cut << shift) - (nGuardCells << shift)) >> shift; // We want signed here.
                 for ( uint32_t j=0; 2 * nGuardCells + 1 != j; ++j, ++signedIndex )
                 {
@@ -280,11 +280,13 @@ int main( int argc, char * argv[] )
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.5 };
-    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 6, 3, 25.0 };
+    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 6.5 };
     // We are willing to get some false alarms out of this algorithm. We are almost counting on it. Er, NO, do NOT
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.75 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.30 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 1.800 };
+// Experiment with Large Guard.
+//    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 6, 3, 25.0 };
     auto lmxTable = std::move( cfarAlgorithm.run( pPowerSpectrum ) );
     // Window out LMXs from the noise floor estimation.
     for ( auto & lmx : lmxTable )
