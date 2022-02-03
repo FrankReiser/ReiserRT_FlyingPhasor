@@ -200,6 +200,7 @@ int main( int argc, char * argv[] )
 
         exit( -1 );
     }
+    ///@todo Additional Limits to impose on command line input: Not above pi/2 and not less than pi/
 #if 1
     else
     {
@@ -235,16 +236,17 @@ int main( int argc, char * argv[] )
 #if defined( GENERATE_CFAR_TEST_TONE ) && ( GENERATE_CFAR_TEST_TONE != 0 )
     ///@todo Ideally, this would utilize a legacy tone generator. But we're only taking a fraction from it.
 //    pFlyingPhasorToneGen->reset( -radiansPerSample, -phi );
-    pFlyingPhasorToneGen->reset( radiansPerSample + M_PI / 4.0, 0.0 );
+//    pFlyingPhasorToneGen->reset( radiansPerSample + M_PI / 4.0, 0.0 );
+    pFlyingPhasorToneGen->reset( radiansPerSample * 2.0, phi * 2.0 ); // 2nd Harmonic!!!
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries2.get() );
     for ( size_t i=0; i != numSamples; ++i )
     {
 //        pToneSeries[i] += pToneSeries2[i] / 1e3;    // 20log(1e-3) = -60dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e4;    // 20log(1e-4) = -80dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e5;    // 20log(1e-5) = -100dB
-//        pToneSeries[i] += pToneSeries2[i] / 1e6;    // 20log(1e-6) = -120dB
+        pToneSeries[i] += pToneSeries2[i] / 1e6;    // 20log(1e-6) = -120dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e7;    // 20log(1e-6) = -140dB
-        pToneSeries[i] += pToneSeries2[i] / 1e8;    // 20log(1e-8) = -160dB
+//        pToneSeries[i] += pToneSeries2[i] / 1e8;    // 20log(1e-8) = -160dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e9;    // 20log(1e-9) = -180dB
     }
 #endif
@@ -280,7 +282,10 @@ int main( int argc, char * argv[] )
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.5 };
+//    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 6.5 };
+
     CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 6.5 };
+
     // We are willing to get some false alarms out of this algorithm. We are almost counting on it. Er, NO, do NOT
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.75 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.30 };
