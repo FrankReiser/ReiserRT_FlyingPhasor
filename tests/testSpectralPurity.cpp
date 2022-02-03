@@ -95,12 +95,12 @@ public:
                 ++algIndex &= mask;
             }
 
-            ///@note This breaks down at Nyquist.
+            ///@note This breaks down at Nyquist. The centroid may lean positive, indicating just beyond Nyquist.
+            ///Fixing this is problematic as this is a cusp between positive and negative frequencies.
             auto centroid = [&]()
             {
                 double spanPower = 0;
                 double productAccum = 0;
-                ///@todo This is NOT handling Signage Correctly. Think I am going too have to resurrect the shift logic.
                 auto signedIndex = int32_t((cut << shift) - (nGuardCells << shift)) >> shift; // We want signed here.
                 for ( uint32_t j=0; 2 * nGuardCells + 1 != j; ++j, ++signedIndex )
                 {
@@ -181,6 +181,10 @@ ScalarBufferType blackman( size_t nSamples )
     return std::move( w );
 }
 
+// This test is primarily looking for harmonic spurs from the Flying Phasor Tone Generator.
+// Therefore, it works best if the frequency under test is mid to low band (Goldie Locks Zone).
+// Too high a test tone and any harmonics would wrap (alias); too low and harmonics would merge
+// with the tone. When "in the zone", it can detect harmonic spurs down to -120dB.
 int main( int argc, char * argv[] )
 {
     int retCode = 0;
@@ -200,6 +204,10 @@ int main( int argc, char * argv[] )
 
         exit( -1 );
     }
+    ///@todo Additional Limits to impose on command line input: Not above 1.5 and not below 0.125 if test tone generated
+    ///Really do not care otherwise. Reason being, the test tone is 2nd harmonic and if the input is too low in frequency,
+    ///the test tone cannot be detected. It gets eaten by the window skirt. Just something to think about if the
+    ///test tone is to be used for any sort of validation and if it must be found.
 #if 1
     else
     {
@@ -235,16 +243,17 @@ int main( int argc, char * argv[] )
 #if defined( GENERATE_CFAR_TEST_TONE ) && ( GENERATE_CFAR_TEST_TONE != 0 )
     ///@todo Ideally, this would utilize a legacy tone generator. But we're only taking a fraction from it.
 //    pFlyingPhasorToneGen->reset( -radiansPerSample, -phi );
-    pFlyingPhasorToneGen->reset( radiansPerSample + M_PI / 4.0, 0.0 );
+//    pFlyingPhasorToneGen->reset( radiansPerSample + M_PI / 4.0, 0.0 );
+    pFlyingPhasorToneGen->reset( radiansPerSample * 2.0, phi * 2.0 ); // 2nd Harmonic!!!
     pFlyingPhasorToneGen->getSamples( numSamples, pToneSeries2.get() );
     for ( size_t i=0; i != numSamples; ++i )
     {
 //        pToneSeries[i] += pToneSeries2[i] / 1e3;    // 20log(1e-3) = -60dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e4;    // 20log(1e-4) = -80dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e5;    // 20log(1e-5) = -100dB
-//        pToneSeries[i] += pToneSeries2[i] / 1e6;    // 20log(1e-6) = -120dB
+        pToneSeries[i] += pToneSeries2[i] / 1e6;    // 20log(1e-6) = -120dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e7;    // 20log(1e-6) = -140dB
-        pToneSeries[i] += pToneSeries2[i] / 1e8;    // 20log(1e-8) = -160dB
+//        pToneSeries[i] += pToneSeries2[i] / 1e8;    // 20log(1e-8) = -160dB
 //        pToneSeries[i] += pToneSeries2[i] / 1e9;    // 20log(1e-9) = -180dB
     }
 #endif
@@ -280,11 +289,16 @@ int main( int argc, char * argv[] )
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 4.5 };
-    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 6, 3, 25.0 };
+//    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 6.5 };
+
+    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 6.5 };
+
     // We are willing to get some false alarms out of this algorithm. We are almost counting on it. Er, NO, do NOT
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.75 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.30 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 1.800 };
+// Experiment with Large Guard.
+//    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 6, 3, 25.0 };
     auto lmxTable = std::move( cfarAlgorithm.run( pPowerSpectrum ) );
     // Window out LMXs from the noise floor estimation.
     for ( auto & lmx : lmxTable )
