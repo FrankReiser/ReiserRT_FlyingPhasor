@@ -9,9 +9,9 @@
 #include <algorithm>
 #include <fftw3.h>
 
-#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 0
+#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 1
 #define SORT_LMX_ENTRIES 1
-#define GENERATE_CFAR_TEST_TONE 1
+#define GENERATE_CFAR_TEST_TONE 0
 
 constexpr size_t epochSizePowerTwo = 12;
 constexpr size_t numSamples = 1 << epochSizePowerTwo;
@@ -181,6 +181,10 @@ ScalarBufferType blackman( size_t nSamples )
     return std::move( w );
 }
 
+// This test is primarily looking for harmonic spurs from the Flying Phasor Tone Generator.
+// Therefore, it works best if the frequency under test is mid to low band (Goldie Locks Zone).
+// Too high a test tone and any harmonics would wrap (alias); too low and harmonics would merge
+// with the tone. When "in the zone", it can detect harmonic spurs down to -120dB.
 int main( int argc, char * argv[] )
 {
     int retCode = 0;
@@ -200,7 +204,10 @@ int main( int argc, char * argv[] )
 
         exit( -1 );
     }
-    ///@todo Additional Limits to impose on command line input: Not above pi/2 and not less than pi/
+    ///@todo Additional Limits to impose on command line input: Not above 1.5 and not below 0.125 if test tone generated
+    ///Really do not care otherwise. Reason being, the test tone is 2nd harmonic and if the input is too low in frequency,
+    ///the test tone cannot be detected. It gets eaten by the window skirt. Just something to think about if the
+    ///test tone is to be used for any sort of validation and if it must be found.
 #if 1
     else
     {
