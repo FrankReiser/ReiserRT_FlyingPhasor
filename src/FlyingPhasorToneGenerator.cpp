@@ -2,6 +2,8 @@
 
 #include "FlyingPhasorToneGenerator.h"
 
+using namespace ReiserRT::Signal;
+
 class FlyingPhasorToneGenerator::Imple
 {
 private:

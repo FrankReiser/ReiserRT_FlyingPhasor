@@ -13,6 +13,8 @@
 #define SORT_LMX_ENTRIES 1
 #define GENERATE_CFAR_TEST_TONE 0
 
+using namespace ReiserRT::Signal;
+
 constexpr size_t epochSizePowerTwo = 12;
 constexpr size_t numSamples = 1 << epochSizePowerTwo;
 
@@ -371,20 +373,20 @@ int main( int argc, char * argv[] )
             auto lmxCount = lmxTable.size();
             if ( lmxCount >= 1 )
             {
-                // If are primary tone is better than 115dB above this next LMX we are good.
+                // If our primary tone is better than 115dB above this next LMX we are good.
                 const auto & nxtLmx = lmxTable[1];
                 auto spurFreeRange = 10 * std::log10( topLmx.pwrLevel / nxtLmx.pwrLevel );
 //                std::cout << "Spur detected, down: -" << spurFreeRange << std::endl;
                 if ( spurFreeRange < 115.0 )
                 {
-                    ///@todo A lot more details here would be nice.
-                    std::cout << "Spur Out of Spec!" << std::endl;
+                    std::cout << "Spur Out of Spec:" << std::endl;
+                    std::cout << "\tPower Ratio: " << spurFreeRange << ", radiansPerSample: "
+                        << calcRadsPerSample( nxtLmx.centroid ) << std::endl;
+
                     retCode = 3;
                     break;
                 }
             }
-
-            ///@todo What about additional LMXs. What should happen first. Noise floor or Second Tone.
 
             std::cout << "SNR: " << 10 * std::log10( topLmx.pwrLevel / noiseFloor ) << std::endl;
 
