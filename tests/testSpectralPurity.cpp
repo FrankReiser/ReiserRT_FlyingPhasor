@@ -31,7 +31,7 @@ struct LocalMax
     size_t atIndex{};
 };
 
-// Purposefully mis-ordered so that the biggest if first, not last.
+// Purposefully mis-ordered so that the biggest is first, not last.
 bool operator< ( const LocalMax & a, const LocalMax & b )
 {
     return a.pwrLevel > b.pwrLevel;

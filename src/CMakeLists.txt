@@ -13,8 +13,8 @@ set( _privateSources
         FlyingPhasorToneGenerator.cpp
         )
 
-add_library( TSG_FlyingPhasorToneGen SHARED "" )
-target_sources( TSG_FlyingPhasorToneGen
+add_library( FlyingPhasorToneGen SHARED "" )
+target_sources( FlyingPhasorToneGen
         PRIVATE
         ${_privateSources}
         #            ${_privateHeaders}
@@ -22,7 +22,7 @@ target_sources( TSG_FlyingPhasorToneGen
         #            ${_publicHeaders}
         )
 
-set_target_properties( TSG_FlyingPhasorToneGen
+set_target_properties( FlyingPhasorToneGen
         PROPERTIES
         POSITION_INDEPENDENT_CODE 1
         CXX_VISIBILITY_PRESET hidden
@@ -30,33 +30,33 @@ set_target_properties( TSG_FlyingPhasorToneGen
         VERSION ${PROJECT_VERSION}
         SOVERSION ${PROJECT_VERSION_MAJOR}
         DEBUG_POSTFIX "_d"
-        PUBLIC_HEADER "${_publicHeaders};${CMAKE_BINARY_DIR}/${INSTALL_INCLUDEDIR}/TSG_FlyingPhasorToneGenExport.h"
+        PUBLIC_HEADER "${_publicHeaders};${CMAKE_BINARY_DIR}/${INSTALL_INCLUDEDIR}/FlyingPhasorToneGenExport.h"
         )
 
 # Specify our target interfaces for external clients
-target_include_directories( TSG_FlyingPhasorToneGen
+target_include_directories( FlyingPhasorToneGen
         PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_BINARY_DIR}/${INSTALL_INCLUDEDIR}>"
         "$<INSTALL_INTERFACE:${INSTALL_INCLUDEDIR}>"
         )
 
 include(GenerateExportHeader)
-generate_export_header( TSG_FlyingPhasorToneGen
-        BASE_NAME "TSG_FlyingPhasorToneGen"
-        EXPORT_MACRO_NAME "TSG_FlyingPhasorToneGen_EXPORT"
-        EXPORT_FILE_NAME "${CMAKE_BINARY_DIR}/${INSTALL_INCLUDEDIR}/TSG_FlyingPhasorToneGenExport.h"
-        DEPRECATED_MACRO_NAME "TSG_FlyingPhasorToneGen_DEPRECATED"
-        NO_EXPORT_MACRO_NAME "TSG_FlyingPhasorToneGen_NO_EXPORT"
-        STATIC_DEFINE "TSG_FlyingPhasorToneGen_STATIC_DEFINE"
-        NO_DEPRECATED_MACRO_NAME "TSG_FlyingPhasorToneGen_NO_DEPRECATED"
+generate_export_header( FlyingPhasorToneGen
+        BASE_NAME "FlyingPhasorToneGen"
+        EXPORT_MACRO_NAME "FlyingPhasorToneGen_EXPORT"
+        EXPORT_FILE_NAME "${CMAKE_BINARY_DIR}/${INSTALL_INCLUDEDIR}/FlyingPhasorToneGenExport.h"
+        DEPRECATED_MACRO_NAME "FlyingPhasorToneGen_DEPRECATED"
+        NO_EXPORT_MACRO_NAME "FlyingPhasorToneGen_NO_EXPORT"
+        STATIC_DEFINE "FlyingPhasorToneGen_STATIC_DEFINE"
+        NO_DEPRECATED_MACRO_NAME "FlyingPhasorToneGen_NO_DEPRECATED"
         DEFINE_NO_DEPRECATED
         )
 
 install(
         TARGETS
-        TSG_FlyingPhasorToneGen
+        FlyingPhasorToneGen
         EXPORT
-        TSG_FlyingPhasorToneGenTargets
+        FlyingPhasorToneGenTargets
         ARCHIVE
         DESTINATION ${INSTALL_LIBDIR}
         COMPONENT lib
@@ -73,9 +73,9 @@ install(
 
 install (
         EXPORT
-        TSG_FlyingPhasorToneGenTargets
+        FlyingPhasorToneGenTargets
         NAMESPACE
-        "TSG_FlyingPhasorToneGen::"
+        "FlyingPhasorToneGen::"
         DESTINATION
         ${INSTALL_CMAKEDIR}
         COMPONENT
@@ -84,20 +84,20 @@ install (
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-        ${CMAKE_CURRENT_BINARY_DIR}/TSG_FlyingPhasorToneGenConfigVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/FlyingPhasorToneGenConfigVersion.cmake
         VERSION ${PROJECT_VERSION}
         COMPATIBILITY SameMajorVersion
 )
 configure_package_config_file(
-        ${PROJECT_SOURCE_DIR}/cmake/TSG_FlyingPhasorToneGenConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/TSG_FlyingPhasorToneGenConfig.cmake
+        ${PROJECT_SOURCE_DIR}/cmake/FlyingPhasorToneGenConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/FlyingPhasorToneGenConfig.cmake
         INSTALL_DESTINATION ${INSTALL_CMAKEDIR}
 )
 
 install(
         FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/TSG_FlyingPhasorToneGenConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/TSG_FlyingPhasorToneGenVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/FlyingPhasorToneGenConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/FlyingPhasorToneGenVersion.cmake
         DESTINATION
         ${INSTALL_CMAKEDIR}
 )

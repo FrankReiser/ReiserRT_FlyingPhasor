@@ -3,7 +3,7 @@
 #ifndef TSG_COMPLEXTONEGEN_FLYINGPHASORTONEGENERATOR_H
 #define TSG_COMPLEXTONEGEN_FLYINGPHASORTONEGENERATOR_H
 
-#include "TSG_FlyingPhasorToneGenExport.h"
+#include "FlyingPhasorToneGenExport.h"
 
 #include <complex>
 
@@ -33,7 +33,7 @@
  * The implementation file contains greater details on the mathematics
  * that make this possible.
  */
-class TSG_FlyingPhasorToneGen_EXPORT FlyingPhasorToneGenerator
+class FlyingPhasorToneGen_EXPORT FlyingPhasorToneGenerator
 {
 private:
     class Imple;
