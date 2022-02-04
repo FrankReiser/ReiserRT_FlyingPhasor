@@ -45,8 +45,6 @@ int CommandLineParser::parseCommandLine( int argc, char * argv[] )
                 std::cout << "The getopt_long call detected the --radsPerSample=" << optarg
                           << ". Value extracted = " << radsPerSampleIn << "." << std::endl;
 #endif
-                ///@todo Validate limit on nyquist pi(rads)/sample? Maybe not.
-
                 break;
             case Phase:
                 phaseIn = std::stod( optarg );
@@ -54,8 +52,6 @@ int CommandLineParser::parseCommandLine( int argc, char * argv[] )
                 std::cout << "The getopt_long call detected the --phase=" << optarg
                           << ". Value extracted = " << phaseIn << "." << std::endl;
 #endif
-                ///@todo Validate that Rads Per Sample must be non-zero to specify phase? Maybe not.
-
                 break;
             case '?':
                 std::cout << "The getopt_long call returned '?'" << std::endl;
