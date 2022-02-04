@@ -183,7 +183,7 @@ ScalarBufferType blackman( size_t nSamples )
 
 // This test is primarily looking for harmonic spurs from the Flying Phasor Tone Generator.
 // Therefore, it works best if the frequency under test is mid to low band (Goldie Locks Zone).
-// Too high a test tone and any harmonics would wrap (alias); too low and harmonics would merge
+// Too high a tone and any harmonics would wrap (alias); too low and harmonics would merge
 // with the tone. When "in the zone", it can detect harmonic spurs down to -120dB.
 int main( int argc, char * argv[] )
 {
@@ -284,7 +284,9 @@ int main( int argc, char * argv[] )
         std::cout << "Power Spec[" << i << "] = " << pPowerSpectrum[i] << std::endl;
 #endif
 
-    // nT:5 nG:2 Thresh:5.0 works damned well.
+    // Done with the plan.
+    fftw_destroy_plan( fftwPlan );
+
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.2 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 5.0 };
@@ -293,13 +295,14 @@ int main( int argc, char * argv[] )
 
     CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 6.5 };
 
-    // We are willing to get some false alarms out of this algorithm. We are almost counting on it. Er, NO, do NOT
+// We are willing to get some false alarms out of this algorithm. We are almost counting on it. Er, NO, do NOT
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.75 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 2.30 };
 //    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 5, 2, 1.800 };
-// Experiment with Large Guard.
-//    CFAR_Algorithm cfarAlgorithm{ epochSizePowerTwo+1, 6, 3, 25.0 };
+
+    // Run the CFAR Algorithm
     auto lmxTable = std::move( cfarAlgorithm.run( pPowerSpectrum ) );
+
     // Window out LMXs from the noise floor estimation.
     for ( auto & lmx : lmxTable )
     {
@@ -319,19 +322,75 @@ int main( int argc, char * argv[] )
     if ( !noiseElements ) ++noiseElements;
     noiseFloor /= double( noiseElements );
     std::cout << "New Noise Floor Estimate: " << noiseFloor << ", Noise Floor Elements: " << noiseElements << std::endl;
-    for ( auto & lmx : lmxTable )
+
+    // Calculate Radians per Sample from an LMX Centroid.
+    // NOTE: Expects x2 zero padding.
+    auto calcRadsPerSample = []( double centroid ){ return 2 * M_PI * centroid / ( 2 * numSamples ); };
+
+    // Print out LMX Table with additional radian per sample detection which is not done by CFAR.
+    for ( const auto & lmx : lmxTable )
     {
         std::cout << "LMX @" << lmx.atIndex
             << ", powerLvl: " << lmx.pwrLevel
             << ", centroid: " << lmx.centroid
-            << ", radiansPerSample: " << 2 * M_PI * lmx.centroid / 2 / numSamples
-                << std::endl;
+//            << ", radiansPerSample: " << 2 * M_PI * lmx.centroid / ( 2 * numSamples )
+            << ", radiansPerSample: " << calcRadsPerSample( lmx.centroid )
+            << std::endl;
     }
 
+    // If the LMX Table is empty. This is a failure. We expect to find the requested input tone.
+    if ( lmxTable.empty() )
+    {
+        std::cout << "Did Not Generate Detectable Tone!" << std::endl;
+        retCode = 1;
+    }
+    else
+    {
+        // The LMX Table is sorted by amplitude. Obviously, the most significant tone should be the requested input
+        // tone.
+        const auto & topLmx = lmxTable[0];
+        auto topLmxFreq = calcRadsPerSample( topLmx.centroid );
 
+        do
+        {
+            // Verify the frequency. We expect it to be close. However, we have a crude centroid-er and
+            // we are constrained by that. Additionally, The Time Domain Purity Test verifies phase, frequency
+            // and amplitude to high degrees.
+            auto deltaFreq = radiansPerSample - topLmxFreq;
+//            std::cout << "Delta Freq: " << deltaFreq << std::endl;
+            if ( deltaFreq > 1e-4 )
+            {
+                std::cout << "Generated Tone Frequency Out of Spec!" << std::endl;
+                retCode = 2;
+                break;
+            }
 
-    // Done with the plan for now.
-    fftw_destroy_plan( fftwPlan );
+            // Do we have another LMX?
+            // Note: The next would be all that matters here, they are sorted by max power first.
+            // We will verify we are adequately above it.
+            auto lmxCount = lmxTable.size();
+            if ( lmxCount >= 1 )
+            {
+                // If are primary tone is better than 115dB above this next LMX we are good.
+                const auto & nxtLmx = lmxTable[1];
+                auto spurFreeRange = 10 * std::log10( topLmx.pwrLevel / nxtLmx.pwrLevel );
+//                std::cout << "Spur detected, down: -" << spurFreeRange << std::endl;
+                if ( spurFreeRange < 115.0 )
+                {
+                    ///@todo A lot more details here would be nice.
+                    std::cout << "Spur Out of Spec!" << std::endl;
+                    retCode = 3;
+                    break;
+                }
+            }
+
+            ///@todo What about additional LMXs. What should happen first. Noise floor or Second Tone.
+
+            std::cout << "SNR: " << 10 * std::log10( topLmx.pwrLevel / noiseFloor ) << std::endl;
+
+        } while ( false );
+
+    }
 
     exit( retCode );
     return retCode;
