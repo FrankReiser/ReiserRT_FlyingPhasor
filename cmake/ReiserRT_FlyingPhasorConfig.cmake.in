@@ -1,0 +1,34 @@
+# -------------------
+#
+# ReiserRT_FlyingPhasor cmake module.
+# This module sets the following variables in your project:
+#
+#   ReiserRT_FlyingPhasor_FOUND - true if ReiserRT_FlyingPhasor found on the system
+#   ReiserRT_FlyingPhasor_VERSION - ReiserRT_FlyingPhasor version in format Major.Minor.Release
+#
+#
+# Exported targets:
+#
+# If ReiserRT_FlyingPhasor is found, this module defines the following :prop_tgt:`IMPORTED`
+# targets. ::
+#   ReiserRT_FlyingPhasor::ReiserRT_FlyingPhasor - the shared library with header & defs attached.
+#
+#
+# Suggested usage:
+#
+#   find_package(ReiserRT_FlyingPhasor)
+#   find_package(ReiserRT_FlyingPhasor 1.0 CONFIG REQUIRED)
+#
+#
+# The following variables can be set to guide the search for this package:
+#
+#   ReiserRT_FlyingPhasor_DIR - CMake variable, set to directory containing this Config file
+#   CMAKE_PREFIX_PATH - CMake variable, set to root directory of this package
+#   PATH - environment variable, set to bin directory of this package
+#   CMAKE_DISABLE_FIND_PACKAGE_ReiserRT_FlyingPhasor - CMake variable, disables
+#       find_package(ReiserRT_FlyingPhasor) perhaps to force internal build
+
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/ReiserRT_FlyingPhasorTargets.cmake")
+check_required_components( "ReiserRT_FlyingPhasor" )

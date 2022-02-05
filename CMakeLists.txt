@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(
-	TSG_FlyingPhasorToneGen
+	ReiserRT_FlyingPhasor
         VERSION 1.0.1
-        DESCRIPTION "TSG Complex Tone Generator" )
+        DESCRIPTION "ReiserRT Complex Flying Phasor Tone Generator" )
 
 # Set up compiler requirements
 set(CMAKE_CXX_STANDARD 11)
@@ -28,7 +28,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
 # Offer the user the choice of overriding the installation directories
 set(INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR} CACHE PATH "Installation directory for libraries")
 set(INSTALL_BINDIR ${CMAKE_INSTALL_BINDIR} CACHE PATH "Installation directory for executables")
-set(INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE PATH "Installation directory for header files")
+set(INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/ReiserRT CACHE PATH "Installation directory for header files")
 if(WIN32 AND NOT CYGWIN)
     set(DEF_INSTALL_CMAKEDIR CMake)
 else()

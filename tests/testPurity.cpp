@@ -12,6 +12,8 @@
 
 #include <ctime>
 
+using namespace ReiserRT::Signal;
+
 double getClockMonotonic()
 {
     timespec tNow = { 0, 0 };
