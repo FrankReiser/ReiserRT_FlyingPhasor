@@ -9,9 +9,9 @@
 #include <algorithm>
 #include <fftw3.h>
 
-#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 1
+#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 0
 #define SORT_LMX_ENTRIES 1
-#define GENERATE_CFAR_TEST_TONE 0
+#define GENERATE_CFAR_TEST_TONE 1
 
 using namespace ReiserRT::Signal;
 
@@ -165,7 +165,7 @@ ScalarBufferType blackman( size_t nSamples )
 {
     ScalarBufferType w{new FlyingPhasorToneGenerator::PrecisionType[ nSamples ] };
 
-    for (size_t i = 0; i != nSamples ; ++i )
+    for ( size_t i = 0; i != nSamples ; ++i )
     {
 #if 0
         // 'Symetric'
@@ -178,6 +178,23 @@ ScalarBufferType blackman( size_t nSamples )
                0.5 * std::cos( 2.0 * M_PI * double( i ) / double( nSamples ) ) +
                0.08 * std::cos(4.0 * M_PI * double( i ) / double( nSamples ) );
 #endif
+    }
+
+    return std::move( w );
+}
+
+ScalarBufferType blackmanNuttall( size_t nSamples )
+{
+    ScalarBufferType w{new FlyingPhasorToneGenerator::PrecisionType[ nSamples ] };
+
+    for ( size_t i = 0; i != nSamples; ++i )
+    {
+        // 'Periodic'
+        w[i] = 0.3635819 -
+               0.4891775 * std::cos( 2.0 * M_PI * double( i ) / double( nSamples ) ) +
+               0.1365995 * std::cos( 4.0 * M_PI * double( i ) / double( nSamples ) ) -
+               0.0106411 * std::cos( 6.0 * M_PI * double( i ) / double( nSamples ) );
+
     }
 
     return std::move( w );
@@ -230,6 +247,7 @@ int main( int argc, char * argv[] )
 
     // Blackman Window of Epoch size
     auto bWnd = blackman( numSamples );
+//    auto bWnd = blackmanNuttall( numSamples );
 
     // FFTW wants a plan to execute. It requires the number of samples and the source and
     // destination buffer addresses.
@@ -308,8 +326,9 @@ int main( int argc, char * argv[] )
     // Window out LMXs from the noise floor estimation.
     for ( auto & lmx : lmxTable )
     {
-        auto algIndex = uint32_t( lmx.atIndex - ( 30 ) ) & (numSamples * 2 - 1);
-        for ( uint32_t i=0; 30*2+1 != i; ++i )
+        int halfWidth = 30;
+        auto algIndex = uint32_t( lmx.atIndex - ( halfWidth ) ) & (numSamples * 2 - 1);
+        for ( int i=0; halfWidth*2+1 != i; ++i )
         {
             auto & p = pPowerSpectrum[ algIndex ];
             if ( p != 0.0 )
@@ -377,6 +396,7 @@ int main( int argc, char * argv[] )
                 const auto & nxtLmx = lmxTable[1];
                 auto spurFreeRange = 10 * std::log10( topLmx.pwrLevel / nxtLmx.pwrLevel );
 //                std::cout << "Spur detected, down: -" << spurFreeRange << std::endl;
+#if !defined( CONSOLIDATE_ADJACENT_LMX_ENTRIES ) || ( CONSOLIDATE_ADJACENT_LMX_ENTRIES != 0 )
                 if ( spurFreeRange < 115.0 )
                 {
                     std::cout << "Spur Out of Spec:" << std::endl;
@@ -386,6 +406,7 @@ int main( int argc, char * argv[] )
                     retCode = 3;
                     break;
                 }
+#endif
             }
 
             std::cout << "SNR: " << 10 * std::log10( topLmx.pwrLevel / noiseFloor ) << std::endl;
