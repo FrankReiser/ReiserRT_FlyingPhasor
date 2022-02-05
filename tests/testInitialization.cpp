@@ -7,6 +7,8 @@
 #include <iostream>
 #include <memory>
 
+using namespace ReiserRT::Signal;
+
 int main( int argc, char * argv[] )
 {
     int retCode = 0;
