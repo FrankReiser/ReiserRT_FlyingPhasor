@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(
-	TSG_FlyingPhasorToneGen
+	ReiserRT_FlyingPhasor
         VERSION 1.0.1
-        DESCRIPTION "TSG Complex Tone Generator" )
+        DESCRIPTION "ReiserRT Complex Flying Phasor Tone Generator" )
 
 # Set up compiler requirements
 set(CMAKE_CXX_STANDARD 11)

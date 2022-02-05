@@ -1,9 +1,9 @@
 // Created on 20220105
 
-#ifndef TSG_COMPLEXTONEGEN_FLYINGPHASORTONEGENERATOR_H
-#define TSG_COMPLEXTONEGEN_FLYINGPHASORTONEGENERATOR_H
+#ifndef REISER_RT_FLYING_PHASOR_H
+#define REISER_RT_FLYING_PHASOR_H
 
-#include "FlyingPhasorToneGenExport.h"
+#include "ReiserRT_FlyingPhasorExport.h"
 
 #include <complex>
 
@@ -38,7 +38,7 @@ namespace ReiserRT
          * The implementation file contains greater details on the mathematics
          * that make this possible.
          */
-        class FlyingPhasorToneGen_EXPORT FlyingPhasorToneGenerator
+        class ReiserRT_FlyingPhasor_EXPORT FlyingPhasorToneGenerator
         {
         private:
             class Imple;
@@ -62,4 +62,4 @@ namespace ReiserRT
 }
 
 
-#endif //TSG_COMPLEXTONEGEN_FLYINGPHASORTONEGENERATOR_H
+#endif //REISER_RT_FLYING_PHASOR_H
