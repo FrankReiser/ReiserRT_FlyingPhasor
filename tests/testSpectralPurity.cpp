@@ -9,9 +9,9 @@
 #include <algorithm>
 #include <fftw3.h>
 
-#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 0
+#define CONSOLIDATE_ADJACENT_LMX_ENTRIES 1
 #define SORT_LMX_ENTRIES 1
-#define GENERATE_CFAR_TEST_TONE 1
+#define GENERATE_CFAR_TEST_TONE 0
 
 using namespace ReiserRT::Signal;
 
