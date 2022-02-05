@@ -40,22 +40,21 @@ namespace ReiserRT
          */
         class ReiserRT_FlyingPhasor_EXPORT FlyingPhasorToneGenerator
         {
-        private:
-            class Imple;
-
         public:
             using PrecisionType = double;
             using ElementType = std::complex< PrecisionType >;
             using ElementBufferTypePtr = ElementType *;
 
             explicit FlyingPhasorToneGenerator( double radiansPerSample=0.0, double phi=0.0 );
-            ~FlyingPhasorToneGenerator();
+            ~FlyingPhasorToneGenerator() = default;
 
             void getSamples( size_t numSamples, ElementBufferTypePtr pElementBufferType );
             void reset( double radiansPerSample=0.0, double phi=0.0 );
 
         private:
-            Imple * pImple;
+            ElementType rate;
+            ElementType phasor;
+            size_t sampleCounter;
         };
 
     }
