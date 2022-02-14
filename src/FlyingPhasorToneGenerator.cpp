@@ -1,4 +1,11 @@
-// Created on 20220105
+/**
+ * @file FlyingPhasorToneGenerator.cpp
+ * @brief The Implementation file for the Flying Phasor Tone Generator
+ *
+ * @authors Frank Reiser
+ * @date Initiated on Jan 05, 2022
+ */
+
 
 #include "FlyingPhasorToneGenerator.h"
 

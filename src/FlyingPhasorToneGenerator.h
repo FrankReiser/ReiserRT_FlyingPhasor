@@ -1,4 +1,10 @@
-// Created on 20220105
+/**
+ * @file FlyingPhasorToneGenerator.h
+ * @brief The Specification file for the Flying Phasor Tone Generator
+ *
+ * @authors Frank Reiser
+ * @date Initiated on Jan 05, 2022
+ */
 
 #ifndef REISER_RT_FLYING_PHASOR_H
 #define REISER_RT_FLYING_PHASOR_H
@@ -37,6 +43,8 @@ namespace ReiserRT
          * for generating complex sinusoidal waveforms under "release" builds.
          * The implementation file contains greater details on the mathematics
          * that make this possible.
+         *
+         * @todo Finish Documenting This Class
          */
         class ReiserRT_FlyingPhasor_EXPORT FlyingPhasorToneGenerator
         {
