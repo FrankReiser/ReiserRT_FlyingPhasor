@@ -50,8 +50,35 @@ namespace ReiserRT
             explicit FlyingPhasorToneGenerator( double radiansPerSample=0.0, double phi=0.0 );
             ~FlyingPhasorToneGenerator() = default;
 
-            void getSamples( FlyingPhasorElementBufferTypePtr pElementBufferType, size_t numSamples );
+            void getSamples( FlyingPhasorElementBufferTypePtr pElementBuffer, size_t numSamples );
+
+            // Like getSamples, except it accumulates samples with values already present in the
+            void accumSamples( FlyingPhasorElementBufferTypePtr pElementBuffer, size_t numSamples );
+
             void reset( double radiansPerSample=0.0, double phi=0.0 );
+
+        private:
+            // Normalize every N iterations to ensure we maintain a unit vector
+            // as rounding errors accumulate. Doing this too often reduces computational performance
+            // and not doing it often enough increases noise (phase and amplitude).
+            // We are being pretty aggressive as it is at every 2 iterations.
+            // Although, every two iterations pushes any slight adjustments to the nyquist point.
+            // This means that any spectral spurs created are at the nyquist and of
+            // thereby of less consequence.
+            // Declared inline here for efficient reuse within the implementation.
+            inline void normalize( )
+            {
+                // Super-fast modulo 2 (for 4, 8, 16..., use 0x3, 0x7, 0xF...)
+                if ( ( sampleCounter++ & 0x1 ) == 0x1 )
+                {
+                    // Normally, this would require a sqrt invocation. However, when the sum of squares
+                    // is near a value of 1, the square root would also be near 1.
+                    // This is a first order Taylor Series approximation around 1 for the sqrt function.
+                    // The re-normalization adjustment is a scalar multiply (not complex multiply).
+                    const double d = 1.0 - ( phasor.real()*phasor.real() + phasor.imag()*phasor.imag() - 1.0 ) / 2.0;
+                    phasor *= d;
+                }
+            }
 
         private:
             FlyingPhasorElementType rate;
