@@ -13,12 +13,12 @@ using namespace ReiserRT::Signal;
 
 FlyingPhasorToneGenerator::FlyingPhasorToneGenerator( double radiansPerSample, double phi )
     : rate{ std::polar( 1.0, radiansPerSample ) }
-    , phasor{ ElementType{ 1.0, 0.0 } * std::polar( 1.0, phi ) }
+    , phasor{FlyingPhasorElementType{1.0, 0.0 } * std::polar(1.0, phi ) }
     , sampleCounter{}
 {
 }
 
-void FlyingPhasorToneGenerator::getSamples( size_t numSamples, ElementBufferTypePtr pElementBufferType )
+void FlyingPhasorToneGenerator::getSamples( FlyingPhasorElementBufferTypePtr pElementBufferType, size_t numSamples )
 {
     for ( size_t i = 0; numSamples != i; ++i )
     {
@@ -52,6 +52,6 @@ void FlyingPhasorToneGenerator::getSamples( size_t numSamples, ElementBufferType
 void FlyingPhasorToneGenerator::reset( double radiansPerSample, double phi )
 {
     rate = std::polar( 1.0, radiansPerSample );
-    phasor = ElementType{ 1.0, 0.0 } * std::polar( 1.0, phi );
+    phasor = FlyingPhasorElementType{1.0, 0.0 } * std::polar(1.0, phi );
     sampleCounter = 0;
 }

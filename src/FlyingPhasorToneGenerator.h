@@ -10,14 +10,12 @@
 #define REISER_RT_FLYING_PHASOR_H
 
 #include "ReiserRT_FlyingPhasorExport.h"
-
-#include <complex>
+#include "FlyingPhasorToneGeneratorDataTypes.h"
 
 namespace ReiserRT
 {
     namespace Signal
     {
-
         /**
          * Class FlyingPhasorToneGenerator
          *
@@ -49,19 +47,15 @@ namespace ReiserRT
         class ReiserRT_FlyingPhasor_EXPORT FlyingPhasorToneGenerator
         {
         public:
-            using PrecisionType = double;
-            using ElementType = std::complex< PrecisionType >;
-            using ElementBufferTypePtr = ElementType *;
-
             explicit FlyingPhasorToneGenerator( double radiansPerSample=0.0, double phi=0.0 );
             ~FlyingPhasorToneGenerator() = default;
 
-            void getSamples( size_t numSamples, ElementBufferTypePtr pElementBufferType );
+            void getSamples( FlyingPhasorElementBufferTypePtr pElementBufferType, size_t numSamples );
             void reset( double radiansPerSample=0.0, double phi=0.0 );
 
         private:
-            ElementType rate;
-            ElementType phasor;
+            FlyingPhasorElementType rate;
+            FlyingPhasorElementType phasor;
             size_t sampleCounter;
         };
 

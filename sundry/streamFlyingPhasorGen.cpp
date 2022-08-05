@@ -35,10 +35,10 @@ int main( int argc, char * argv[] )
     // Generate Samples
     std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, phi } };
     constexpr size_t numSamples = 4096;
-    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pToneSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples] };
-    constexpr FlyingPhasorToneGenerator::ElementType j{ 0.0, 1.0 };
-    FlyingPhasorToneGenerator::ElementBufferTypePtr p = pToneSeries.get();
-    pFlyingPhasorToneGen->getSamples( numSamples, p );
+    std::unique_ptr< FlyingPhasorElementType[] > pToneSeries{new FlyingPhasorElementType [ numSamples] };
+    constexpr FlyingPhasorElementType j{0.0, 1.0 };
+    FlyingPhasorElementBufferTypePtr p = pToneSeries.get();
+    pFlyingPhasorToneGen->getSamples( p, numSamples );
 
     // Write to standard out. It can be redirected.
     std::cout << std::scientific;

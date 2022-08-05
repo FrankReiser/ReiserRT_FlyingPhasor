@@ -29,13 +29,13 @@ int main()
     ReiserRT::Signal::FlyingPhasorToneGenerator toneGenB{ radPerSecToneB };
 
     // Buffers for an epoch's worth of data for each tone.
-    using SampleType = ReiserRT::Signal::FlyingPhasorToneGenerator::ElementType;
+    using SampleType = ReiserRT::Signal::FlyingPhasorElementType;
     std::unique_ptr< SampleType > pToneA{ new SampleType[ NUM_SAMPLES  ] };
     std::unique_ptr< SampleType > pToneB{ new SampleType[ NUM_SAMPLES  ] };
 
     // Get data from each of the tone generators.
-    toneGenA.getSamples( NUM_SAMPLES, pToneA.get() );
-    toneGenB.getSamples( NUM_SAMPLES, pToneB.get() );
+    toneGenA.getSamples( pToneA.get(), NUM_SAMPLES );
+    toneGenB.getSamples( pToneB.get(), NUM_SAMPLES );
 
     // Accumulate tone B into tone A.
     auto pSampleA = pToneA.get();

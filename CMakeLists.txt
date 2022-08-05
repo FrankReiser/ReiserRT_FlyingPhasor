@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(
 	ReiserRT_FlyingPhasor
-        VERSION 1.0.2
+        VERSION 2.0.1
         DESCRIPTION "ReiserRT Complex Flying Phasor Tone Generator" )
 
 # Set up compiler requirements

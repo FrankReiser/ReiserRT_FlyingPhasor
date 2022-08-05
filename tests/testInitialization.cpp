@@ -20,14 +20,14 @@ int main( int argc, char * argv[] )
 
     do {
         // A small buffer for storing two elements
-        std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pElementBuf{new FlyingPhasorToneGenerator::ElementType [2] };
+        std::unique_ptr< FlyingPhasorElementType[] > pElementBuf{new FlyingPhasorElementType [2] };
 
         // Instantiate Default Complex Tone Generator (Defaults => 0.0 radsPerSample, 0.0 phi = pure DC)
         {
             std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ } };
 
             // Fetch 2 samples.
-            pFlyingPhasorToneGen->getSamples( 2, pElementBuf.get() );
+            pFlyingPhasorToneGen->getSamples( pElementBuf.get(), 2 );
 
             // The first sample should have a mag of one and a phase of zero.
             {
@@ -71,7 +71,7 @@ int main( int argc, char * argv[] )
 
             // Attempt a reset to something else and test again.
             pFlyingPhasorToneGen->reset( 1.0, 1.0 );
-            pFlyingPhasorToneGen->getSamples( 2, pElementBuf.get() );
+            pFlyingPhasorToneGen->getSamples( pElementBuf.get(), 2 );
 
             // The first sample should have a mag of one and a phase of 1.0.
             {
@@ -119,7 +119,7 @@ int main( int argc, char * argv[] )
             std::unique_ptr<FlyingPhasorToneGenerator> pFlyingPhasorToneGen{new FlyingPhasorToneGenerator{ -1.5, 1.0 }};
 
             // Fetch 2 samples.
-            pFlyingPhasorToneGen->getSamples( 2, pElementBuf.get() );
+            pFlyingPhasorToneGen->getSamples( pElementBuf.get(), 2 );
 
             // The first sample should have a mag of one and a phase of negative one.
             {
@@ -163,7 +163,7 @@ int main( int argc, char * argv[] )
 
             // Attempt a reset to something else and test again.
             pFlyingPhasorToneGen->reset();
-            pFlyingPhasorToneGen->getSamples( 2, pElementBuf.get() );
+            pFlyingPhasorToneGen->getSamples( pElementBuf.get(), 2 );
 
             // The first sample should have a mag of 1.0 and a phase of 0.0.
             {
