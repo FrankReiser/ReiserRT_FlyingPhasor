@@ -12,14 +12,3 @@ add_test( NAME runPurityTest1 COMMAND $<TARGET_FILE:testPurity> --radsPerSample=
 add_test( NAME runPurityTest2 COMMAND $<TARGET_FILE:testPurity> --radsPerSample=-2.0 --phase=1.5 )
 add_test( NAME runPurityTest3 COMMAND $<TARGET_FILE:testPurity> --radsPerSample=0.25 --phase=0.0 )
 add_test( NAME runPurityTest4 COMMAND $<TARGET_FILE:testPurity> --radsPerSample=0.001 --phase=0.0 )
-
-# Not searching for FFTW3 package config. FFTW3 does not install cmake config files. So if it is installed,
-# it can be found. Just use it. If it is not installed, you'll find out about it soon enough.
-add_executable( testSpectralPurity "" )
-target_sources( testSpectralPurity PRIVATE testSpectralPurity.cpp)
-target_include_directories( testSpectralPurity PUBLIC ../src ../testUtilities )
-target_link_libraries( testSpectralPurity ReiserRT_FlyingPhasor fftw3 TestUtilities )
-add_test( NAME runSpectralPurityTest1 COMMAND $<TARGET_FILE:testSpectralPurity> --radsPerSample=1.5 --phase=-1.5 )
-add_test( NAME runSpectralPurityTest2 COMMAND $<TARGET_FILE:testSpectralPurity> --radsPerSample=-1.5 --phase=1.5 )
-add_test( NAME runSpectralPurityTest3 COMMAND $<TARGET_FILE:testSpectralPurity> --radsPerSample=0.25 --phase=0.0 )
-add_test( NAME runSpectralPurityTest4 COMMAND $<TARGET_FILE:testSpectralPurity> --radsPerSample=0.125 --phase=0.0 )
