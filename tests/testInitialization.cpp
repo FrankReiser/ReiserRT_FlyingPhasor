@@ -206,6 +206,60 @@ int main( int argc, char * argv[] )
             }
         }
 
+        // A quick test of the accumSamples function. It is almost exactly the same as getSamples.
+        // So, if we accumulate samples into a pre-zeroed buffer, it should result in the same outcome
+        // as getSamples would. This test repeats the start of our last test, using accumSamples instead.
+        // Instantiate Specific Complex Tone Generator (-1.5 radsPerSample, 1.0 phi)
+        {
+            std::unique_ptr<FlyingPhasorToneGenerator> pFlyingPhasorToneGen{new FlyingPhasorToneGenerator{ -1.5, 1.0 }};
+
+            // Zero out the first two elements our buffer.
+            pElementBuf[0] = pElementBuf[1] = 0.0;
+
+            // Accumulate 2 samples.
+            pFlyingPhasorToneGen->accumSamples( pElementBuf.get(), 2 );
+
+            // The first sample should have a mag of one and a phase of negative one.
+            {
+                auto phase = std::arg( pElementBuf[0] );
+                if ( !inTolerance( phase, 1.0, 1e-12 ) )
+                {
+                    std::cout << "First Sample Phase: " <<  phase << " out of Tolerance! Should be: "
+                              << 1.0 << std::endl;
+                    retCode = 20;
+                    break;
+                }
+                auto mag = std::abs( pElementBuf[0] );
+                if ( !inTolerance( mag, 1.0, 1e-12 ) )
+                {
+                    std::cout << "First Sample Magnitude: " <<  mag << " out of Tolerance! Should be: "
+                              << 1.0 << std::endl;
+                    retCode = 21;
+                    break;
+                }
+            }
+
+            // The second sample should have a mag of one and a phase of -0.5
+            {
+                auto phase = std::arg( pElementBuf[1] );
+                if ( !inTolerance( phase, -0.5, 1e-12 ) )
+                {
+                    std::cout << "Second Sample Phase: " <<  phase << " out of Tolerance! Should be: "
+                              << -0.5 << std::endl;
+                    retCode = 22;
+                    break;
+                }
+                auto mag = std::abs( pElementBuf[1] );
+                if ( !inTolerance( mag, 1.0, 1e-12 ) )
+                {
+                    std::cout << "Second Sample Magnitude: " <<  mag << " out of Tolerance! Should be: "
+                              << 1.0 << std::endl;
+                    retCode = 23;
+                    break;
+                }
+            }
+        }
+
     } while (false);
 
     exit( retCode );
