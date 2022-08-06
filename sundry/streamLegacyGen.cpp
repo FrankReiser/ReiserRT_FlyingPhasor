@@ -34,9 +34,9 @@ int main( int argc, char * argv[] )
 
     // Generate Samples
     constexpr size_t numSamples = 4096;
-    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pToneSeries{new FlyingPhasorToneGenerator::ElementType [ numSamples] };
-    constexpr FlyingPhasorToneGenerator::ElementType j{ 0.0, 1.0 };
-    FlyingPhasorToneGenerator::ElementBufferTypePtr p = pToneSeries.get();
+    std::unique_ptr< FlyingPhasorElementType[] > pToneSeries{new FlyingPhasorElementType [ numSamples] };
+    constexpr FlyingPhasorElementType j{0.0, 1.0 };
+    FlyingPhasorElementBufferTypePtr p = pToneSeries.get();
     for ( size_t n = 0; numSamples != n; ++n )
     {
         // Legacy Complex Exponential Equivalent

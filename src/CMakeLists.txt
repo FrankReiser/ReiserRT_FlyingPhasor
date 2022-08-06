@@ -1,6 +1,7 @@
 # Public Header files
 set( _publicHeaders
         FlyingPhasorToneGenerator.h
+        FlyingPhasorToneGeneratorDataTypes.h
         )
 
 # Private Header files (none until otherwise determined)
