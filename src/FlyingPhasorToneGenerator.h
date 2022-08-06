@@ -52,7 +52,7 @@ namespace ReiserRT
 
             void getSamples( FlyingPhasorElementBufferTypePtr pElementBuffer, size_t numSamples );
 
-            // Like getSamples, except it accumulates samples with values already present in the
+            // Like getSamples, except it accumulates samples with values already present in the element buffer.
             void accumSamples( FlyingPhasorElementBufferTypePtr pElementBuffer, size_t numSamples );
 
             void reset( double radiansPerSample=0.0, double phi=0.0 );
