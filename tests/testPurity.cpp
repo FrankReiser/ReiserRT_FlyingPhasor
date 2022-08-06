@@ -82,8 +82,8 @@ class PhasePurityAnalyzer
 {
 public:
 
-    void analyzePhaseStability( const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples,
-                              double radiansPerSample, double phi )
+    void analyzePhaseStability(const FlyingPhasorElementBufferTypePtr & pBuf, size_t nSamples,
+                               double radiansPerSample, double phi )
     {
         // Reset stats in case an instance is re-run.
         statsStateMachine.reset();
@@ -140,7 +140,7 @@ private:
 class MagPurityAnalyzer
 {
 public:
-    void analyzeSinusoidMagnitudeStability( const FlyingPhasorToneGenerator::ElementBufferTypePtr & pBuf, size_t nSamples )
+    void analyzeSinusoidMagnitudeStability(const FlyingPhasorElementBufferTypePtr & pBuf, size_t nSamples )
     {
         // Reset stats in case an instance is re-run.
         statsStateMachine.reset();
@@ -224,8 +224,8 @@ int main( int argc, char * argv[] )
 
     // Create buffers for a number of samples for both the legacy and "Flying Phasor" generators.
     const size_t maxSamples = 8192;
-    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pLegacyToneSeries{new FlyingPhasorToneGenerator::ElementType [ maxSamples] };
-    std::unique_ptr< FlyingPhasorToneGenerator::ElementType[] > pFlyingPhasorToneGenSeries{new FlyingPhasorToneGenerator::ElementType [ maxSamples] };
+    std::unique_ptr< FlyingPhasorElementType[] > pLegacyToneSeries{new FlyingPhasorElementType [ maxSamples] };
+    std::unique_ptr< FlyingPhasorElementType[] > pFlyingPhasorToneGenSeries{new FlyingPhasorElementType [ maxSamples] };
 
     // Instantiate the FlyingPhasorToneGenerator. This is what we are testing the purity of as compared to legacy methods.
     std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, phi } };
@@ -242,8 +242,8 @@ int main( int argc, char * argv[] )
 
     // New Old-Fashioned Way. Loop on complex exponential. It implements the same cos(x) + j * sin(x)
     // as the Legacy generator. Just in a little less source code written by me.
-    constexpr FlyingPhasorToneGenerator::ElementType j{ 0.0, 1.0 };
-    FlyingPhasorToneGenerator::ElementBufferTypePtr p = pLegacyToneSeries.get();
+    constexpr FlyingPhasorElementType j{0.0, 1.0 };
+    FlyingPhasorElementBufferTypePtr p = pLegacyToneSeries.get();
     t0 = getClockMonotonic();
     for ( size_t n = 0; numSamples != n; ++n )
     {
@@ -277,14 +277,14 @@ int main( int argc, char * argv[] )
 
     t0 = getClockMonotonic();
     p = pFlyingPhasorToneGenSeries.get();
-    pFlyingPhasorToneGen->getSamples( numSamples, p );
+    pFlyingPhasorToneGen->getSamples( p, numSamples );
     t1 = getClockMonotonic();
 
 #if 0
     // What did we get
     for (size_t n = 0; numSamples != n; ++n )
     {
-        FlyingPhasorToneGenerator::ElementType & s = p[n];
+        FlyingPhasorToneGenerator::FlyingPhasorElementType & s = p[n];
         std::cout << "n: " << n << ", x: " << real(s) << ", y: " << imag(s)
             << ", mag: " << abs(s) << ", phase: " << arg(s) << std::endl;
     }
