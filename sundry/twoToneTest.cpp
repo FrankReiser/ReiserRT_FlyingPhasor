@@ -30,31 +30,24 @@ int main()
 
     // Buffers for an epoch's worth of data for each tone.
     using SampleType = ReiserRT::Signal::FlyingPhasorElementType;
-    std::unique_ptr< SampleType > pToneA{ new SampleType[ NUM_SAMPLES  ] };
-    std::unique_ptr< SampleType > pToneB{ new SampleType[ NUM_SAMPLES  ] };
+    std::unique_ptr< SampleType > toneBuf{new SampleType[ NUM_SAMPLES  ] };
 
     // Get data from each of the tone generators.
-    toneGenA.getSamples( pToneA.get(), NUM_SAMPLES );
-    toneGenB.getSamples( pToneB.get(), NUM_SAMPLES );
-
-    // Accumulate tone B into tone A.
-    auto pSampleA = pToneA.get();
-    auto pSampleB = pToneB.get();
-    for ( size_t i = 0; NUM_SAMPLES != i; ++i )
-        *pSampleA++ += *pSampleB++;
+    toneGenA.getSamples(toneBuf.get(), NUM_SAMPLES );
+    toneGenB.accumSamples( toneBuf.get(), NUM_SAMPLES );
 
     // The result is two sinusoidal signals of amplitude 1, added together. Scaling and conversion to
     // 16bit signed integer to be done by consumer of output from the two tone result.
     // The result max deviation from zero is +/-2.0. To scale this to be withing +/-32767 integer values.
     // Suggesting half range of +/-16383 to be comfortably within acquired digital signal range, so we multiply by 8192.
-    pSampleA = pToneA.get();
+    auto pSample = toneBuf.get();
     for ( size_t i = 0; NUM_SAMPLES != i; ++i )
-        *pSampleA++ *= 8192;
+        *pSample++ *= 8192;
 
     // Print out a few samples, so we can evaluate what has transpired.
-    pSampleA = pToneA.get();
-    for ( size_t i = 0; 20 != i; ++i, ++pSampleA )
-        std::cout << pSampleA->real() << ", " << pSampleA->imag() << std::endl;
+    pSample = toneBuf.get();
+    for ( size_t i = 0; 20 != i; ++i, ++pSample )
+        std::cout << pSample->real() << ", " << pSample->imag() << std::endl;
 
     return 0;
 }
