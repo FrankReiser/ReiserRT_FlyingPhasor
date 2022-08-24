@@ -34,6 +34,40 @@ void FlyingPhasorToneGenerator::getSamples( FlyingPhasorElementBufferTypePtr pEl
     }
 }
 
+void FlyingPhasorToneGenerator::getSamplesScaled( FlyingPhasorElementBufferTypePtr pElementBuffer, size_t numSamples,
+        double scalar )
+{
+    for ( size_t i = 0; numSamples != i; ++i )
+    {
+        // We always start with the current phasor to nail the very first sample (s0)
+        // and advance (rotate) afterwards.
+        *pElementBuffer++ = phasor * scalar;
+
+        // Now advance (rotate) the phasor by our rate (complex multiply)
+        phasor *= rate;
+
+        // Perform normalization
+        normalize();
+    }
+}
+
+void FlyingPhasorToneGenerator::getSamplesScaled( FlyingPhasorElementBufferTypePtr pElementBuffer, size_t numSamples,
+        const double * pScalars )
+{
+    for ( size_t i = 0; numSamples != i; ++i )
+    {
+        // We always start with the current phasor to nail the very first sample (s0)
+        // and advance (rotate) afterwards.
+        *pElementBuffer++ = phasor * *pScalars++;
+
+        // Now advance (rotate) the phasor by our rate (complex multiply)
+        phasor *= rate;
+
+        // Perform normalization
+        normalize();
+    }
+}
+
 void FlyingPhasorToneGenerator::accumSamples( FlyingPhasorElementBufferTypePtr pElementBuffer, size_t numSamples )
 {
     for ( size_t i = 0; numSamples != i; ++i )
@@ -41,6 +75,40 @@ void FlyingPhasorToneGenerator::accumSamples( FlyingPhasorElementBufferTypePtr p
         // We always start with the current phasor to nail the very first sample (s0)
         // and advance (rotate) afterwards.
         *pElementBuffer++ += phasor;
+
+        // Now advance (rotate) the phasor by our rate (complex multiply)
+        phasor *= rate;
+
+        // Perform normalization
+        normalize();
+    }
+}
+
+void FlyingPhasorToneGenerator::accumSamplesScaled( FlyingPhasorElementBufferTypePtr pElementBuffer, size_t numSamples,
+                   double scalar )
+{
+    for ( size_t i = 0; numSamples != i; ++i )
+    {
+        // We always start with the current phasor to nail the very first sample (s0)
+        // and advance (rotate) afterwards.
+        *pElementBuffer++ += phasor * scalar;
+
+        // Now advance (rotate) the phasor by our rate (complex multiply)
+        phasor *= rate;
+
+        // Perform normalization
+        normalize();
+    }
+}
+
+void FlyingPhasorToneGenerator::accumSamplesScaled( FlyingPhasorElementBufferTypePtr pElementBuffer, size_t numSamples,
+                   const double * pScalars )
+{
+    for ( size_t i = 0; numSamples != i; ++i )
+    {
+        // We always start with the current phasor to nail the very first sample (s0)
+        // and advance (rotate) afterwards.
+        *pElementBuffer++ += phasor * *pScalars++;
 
         // Now advance (rotate) the phasor by our rate (complex multiply)
         phasor *= rate;
