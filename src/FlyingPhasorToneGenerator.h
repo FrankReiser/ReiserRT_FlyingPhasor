@@ -147,6 +147,15 @@ namespace ReiserRT
              */
             void reset( double radiansPerSample=0.0, double phi=0.0 );
 
+            /**
+             * @brief Get Sample Counter
+             *
+             * This operation returns the current value of the sample counter.
+             *
+             * @return Returns the current value of the sample counter.
+             */
+            inline size_t getSampleCount() { return sampleCounter; }
+
         private:
             /**
              * @brief The Normalize Operation.
