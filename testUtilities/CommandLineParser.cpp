@@ -2,18 +2,8 @@
 #include "CommandLineParser.h"
 
 #include <iostream>
-#include <cstdlib>
 
 #include <getopt.h>
-
-#if 0
-///@note Unfortunately, we are sort of stuck in the C98 world here and strtol does not offer a lot of ways
-/// to validate. It returns zero if no conversion is able to occur but this is a valid number in a lot of cases.
-int getIntArg( const char * pIntArgStr )
-{
-    return strtol( pIntArgStr, 0, 10 );
-}
-#endif
 
 int CommandLineParser::parseCommandLine( int argc, char * argv[] )
 {
@@ -27,8 +17,8 @@ int CommandLineParser::parseCommandLine( int argc, char * argv[] )
 //        int thisOptionOptIndex = optind ? optind : 1;
         int optionIndex = 0;
         static struct option longOptions[] = {
-                {"radsPerSample", optional_argument, nullptr, RadsPerSample },
-                {"phase", optional_argument, nullptr, Phase },
+                {"radsPerSample", required_argument, nullptr, RadsPerSample },
+                {"phase", required_argument, nullptr, Phase },
                 {nullptr, 0, nullptr, 0 }
         };
 
