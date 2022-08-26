@@ -11,8 +11,41 @@
 #include <limits>
 
 #include <ctime>
+#include <cstring>
 
 using namespace ReiserRT::Signal;
+
+
+void setupScheduling()
+{
+    ///@note Assumptions: Assuming PTHREAD_SCOPE_SYSTEM is scheduler scope and PTHREAD_INHERIT_SCHED is set
+    ///We will simply attempt to enable SCHED_FIFO and potentially set a minor level priority.
+    ///Other threads may need prioritization of there own.
+
+    sched_param schedParam;
+    int policy;
+    if ( pthread_getschedparam( pthread_self(), &policy, &schedParam ) )
+    {
+        std::cout << "Failed to get scheduling parameters. "
+                  << "Unable to setup Realtime scheduling" << std::endl;
+        return;
+    }
+
+    int minPriority = sched_get_priority_min( SCHED_FIFO );
+    int maxPriority = sched_get_priority_max( SCHED_FIFO );
+    schedParam.sched_priority = minPriority + ( maxPriority - minPriority ) * 5 / 100;
+
+    int retCode = pthread_setschedparam( pthread_self(), SCHED_FIFO, &schedParam );
+    if ( 0 != retCode )
+    {
+        std::cout << "Failed to set scheduling parameters. " << strerror( retCode ) << ". "
+                  << "Unable to setup Realtime scheduling" << std::endl;
+        return;
+    }
+
+    std::cout << "Enabled Real Time Scheduling!" << std::endl;
+}
+
 
 double getClockMonotonic()
 {
@@ -217,6 +250,9 @@ int main( int argc, char * argv[] )
 #endif
     double radiansPerSample = cmdLineParser.getRadsPerSample();
     double phi = cmdLineParser.getPhase();
+
+    // Attempt to enable Real Time Scheduling.
+    setupScheduling();
 
     // For maximum view of significant digits for diagnostic purposes.
     std::cout << std::scientific;

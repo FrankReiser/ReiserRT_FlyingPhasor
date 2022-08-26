@@ -15,8 +15,26 @@ namespace ReiserRT
 {
     namespace Signal
     {
+
+        /**
+        * @brief Alias for Precision Type
+        *
+        * This is simply an alias for a double (a 64bit IEEE 754 floating point value)
+        */
         using FlyingPhasorPrecisionType = double;
+
+        /**
+        * @brief Alias for Complex Number Type
+        *
+        * This is simply an alias for a std::complex< FlyingPhasorPrecisionType > or std::complex< double >.
+        */
         using FlyingPhasorElementType = std::complex< FlyingPhasorPrecisionType >;
+
+        /**
+        * @brief Alias for Buffer Type Pointer
+        *
+        * This is simply an alias for a pointer type to our FlyingPhasorElementType.
+        */
         using FlyingPhasorElementBufferTypePtr = FlyingPhasorElementType *;
     }
 }
