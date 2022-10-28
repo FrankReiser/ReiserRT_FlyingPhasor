@@ -260,6 +260,30 @@ int main( int argc, char * argv[] )
             }
         }
 
+        // A quick test of the getSample function. This function returns just a single sample.
+        // We will test it against the getSamples function. Results should be exactly the same.
+        {
+            std::unique_ptr<FlyingPhasorToneGenerator> pFlyingPhasorToneGen{new FlyingPhasorToneGenerator{ M_PI / 256.0 } };
+
+            // Fetch 2 samples.
+            pFlyingPhasorToneGen->getSamples( pElementBuf.get(), 2 );
+
+            // Now reset it and get two samples, one at a time.
+            pFlyingPhasorToneGen->reset( M_PI / 256.0 );
+            for ( size_t i = 0; 2 != i; ++i )
+            {
+                const auto sample = pFlyingPhasorToneGen->getSample();
+                if ( sample != pElementBuf[i] )
+                {
+                    std::cout << "Get Single Sample failed at index " << i << ". Expected " << pElementBuf[i]
+                        << ", obtained " << sample << std::endl;
+                    retCode = 24;
+                    break;
+                }
+            }
+            if ( retCode ) break;
+        }
+
     } while (false);
 
     exit( retCode );

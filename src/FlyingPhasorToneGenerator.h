@@ -116,7 +116,7 @@ namespace ReiserRT
              * This operation accumulates 'N' number of samples from the tone generator into the user provided buffer.
              * The samples accumulated are unscaled (i.e., a magnitude of one).
              *
-             * @param pElementBuffer
+             * @param pElementBuffer User provided buffer large enough to hold the requested number of samples.
              * @param numSamples The number of samples to be accumulated.
              * @param scalar The scalar to be multiplied against each sample before accumulating.
              */
@@ -129,7 +129,7 @@ namespace ReiserRT
              * This operation accumulates 'N' number of samples from the tone generator into the user provided buffer.
              * The samples accumulated are scaled by user provided scalar vector.
              *
-             * @param pElementBuffer
+             * @param pElementBuffer User provided buffer large enough to hold the requested number of samples.
              * @param numSamples The number of samples to be accumulated.
              * @param pScalars A vector of scalars at least as long as the number of samples requested.
              */
@@ -155,6 +155,15 @@ namespace ReiserRT
              * @return Returns the current value of the sample counter.
              */
             inline size_t getSampleCount() { return sampleCounter; }
+
+            /**
+             * @brief Get Single Sample Operation
+             *
+             * This operation returns a single sample, advancing state towards the next.
+             *
+             * @return Returns a single complex sinusoid sample value.
+             */
+            FlyingPhasorElementType getSample();
 
         private:
             /**

@@ -124,3 +124,18 @@ void FlyingPhasorToneGenerator::reset( double radiansPerSample, double phi )
     phasor = FlyingPhasorElementType{1.0, 0.0 } * std::polar(1.0, phi );
     sampleCounter = 0;
 }
+
+FlyingPhasorElementType FlyingPhasorToneGenerator::getSample()
+{
+    // We always start with the current phasor to nail the very first sample (s0)
+    // and advance (rotate) afterwards.
+    auto retValue = phasor;
+
+    // Now advance (rotate) the phasor by our rate (complex multiply)
+    phasor *= rate;
+
+    // Perform normalization
+    normalize();
+
+    return retValue;
+}
