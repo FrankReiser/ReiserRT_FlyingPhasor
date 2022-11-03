@@ -1,4 +1,10 @@
-// Created on 20220108
+/**
+ * @file testInitialization.cpp
+ * @brief Initializes Tone Generator and Performs Basic Tests
+ *
+ * @authors Frank Reiser
+ * @date Initiated on Jan 08, 2022
+ */
 
 #include "FlyingPhasorToneGenerator.h"
 
