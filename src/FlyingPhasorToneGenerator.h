@@ -154,14 +154,14 @@ namespace ReiserRT
              *
              * @return Returns the current value of the sample counter.
              */
-            inline size_t getSampleCount() { return sampleCounter; }
+            inline size_t getSampleCount() const { return sampleCounter; }
 
             /**
              * @brief Get Single Sample Operation
              *
              * This operation returns a single sample, advancing state towards the next.
              *
-             * @return Returns a single complex sinusoid sample value.
+             * @return Returns a single complex sinusoid sample advanced from previous state.
              */
             FlyingPhasorElementType getSample();
 

@@ -1,4 +1,10 @@
-// Created on 20220105
+/**
+ * @file testPurity.cpp
+ * @brief Tests Phase and Magnitude Purity With User Specified Parameters
+ *
+ * @authors Frank Reiser
+ * @date Initiated on Jan 05, 2022
+ */
 
 #include "FlyingPhasorToneGenerator.h"
 
@@ -98,8 +104,8 @@ public:
     {
         mean = 0.0;
         M2 = 0.0;
-        maxNegDev = std::numeric_limits< double >::max();
-        maxPosDev = std::numeric_limits< double >::lowest();
+        maxNegDev = std::numeric_limits< long double >::max();
+        maxPosDev = std::numeric_limits< long double >::lowest();
         nSamples = 0;
     }
 
