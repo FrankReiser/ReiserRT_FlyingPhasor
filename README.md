@@ -1,6 +1,8 @@
 # ReiserRT_FlyingPhasor
 
 Frank Reiser's C++11 implementation of a fast and accurate, sin/cos waveform pair (I/Q) generator.
+This component has been tested to be interface-able with C++20 compiles. Note that the compiled library code
+is built using the c++11 standard.
 
 ## Overview
 This tone generator evolved out of a desire to generate complex exponential waveforms (sinusoids) fast and accurate.
