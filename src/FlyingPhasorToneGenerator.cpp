@@ -23,7 +23,7 @@ void FlyingPhasorToneGenerator::getSamples( FlyingPhasorElementBufferTypePtr pEl
     for ( size_t i = 0; numSamples != i; ++i )
     {
         // We always start with the current phasor to nail the very first sample (s0)
-        // and advance (rotate) afterwards.
+        // and advance (rotate) afterward.
         *pElementBuffer++ = phasor;
 
         // Now advance (rotate) the phasor by our rate (complex multiply)
@@ -40,7 +40,7 @@ void FlyingPhasorToneGenerator::getSamplesScaled( FlyingPhasorElementBufferTypeP
     for ( size_t i = 0; numSamples != i; ++i )
     {
         // We always start with the current phasor to nail the very first sample (s0)
-        // and advance (rotate) afterwards.
+        // and advance (rotate) afterward.
         *pElementBuffer++ = phasor * scalar;
 
         // Now advance (rotate) the phasor by our rate (complex multiply)
@@ -57,7 +57,7 @@ void FlyingPhasorToneGenerator::getSamplesScaled( FlyingPhasorElementBufferTypeP
     for ( size_t i = 0; numSamples != i; ++i )
     {
         // We always start with the current phasor to nail the very first sample (s0)
-        // and advance (rotate) afterwards.
+        // and advance (rotate) afterward.
         *pElementBuffer++ = phasor * *pScalars++;
 
         // Now advance (rotate) the phasor by our rate (complex multiply)
@@ -73,7 +73,7 @@ void FlyingPhasorToneGenerator::accumSamples( FlyingPhasorElementBufferTypePtr p
     for ( size_t i = 0; numSamples != i; ++i )
     {
         // We always start with the current phasor to nail the very first sample (s0)
-        // and advance (rotate) afterwards.
+        // and advance (rotate) afterward.
         *pElementBuffer++ += phasor;
 
         // Now advance (rotate) the phasor by our rate (complex multiply)
@@ -90,7 +90,7 @@ void FlyingPhasorToneGenerator::accumSamplesScaled( FlyingPhasorElementBufferTyp
     for ( size_t i = 0; numSamples != i; ++i )
     {
         // We always start with the current phasor to nail the very first sample (s0)
-        // and advance (rotate) afterwards.
+        // and advance (rotate) afterward.
         *pElementBuffer++ += phasor * scalar;
 
         // Now advance (rotate) the phasor by our rate (complex multiply)
@@ -107,7 +107,7 @@ void FlyingPhasorToneGenerator::accumSamplesScaled( FlyingPhasorElementBufferTyp
     for ( size_t i = 0; numSamples != i; ++i )
     {
         // We always start with the current phasor to nail the very first sample (s0)
-        // and advance (rotate) afterwards.
+        // and advance (rotate) afterward.
         *pElementBuffer++ += phasor * *pScalars++;
 
         // Now advance (rotate) the phasor by our rate (complex multiply)
@@ -128,7 +128,7 @@ void FlyingPhasorToneGenerator::reset( double radiansPerSample, double phi )
 FlyingPhasorElementType FlyingPhasorToneGenerator::getSample()
 {
     // We always start with the current phasor to nail the very first sample (s0)
-    // and advance (rotate) afterwards.
+    // and advance (rotate) afterward.
     auto retValue = phasor;
 
     // Now advance (rotate) the phasor by our rate (complex multiply)
