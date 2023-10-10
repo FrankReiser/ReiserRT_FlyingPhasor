@@ -15,7 +15,7 @@
 
 using namespace ReiserRT::Signal;
 
-int main( int argc, char * argv[] )
+int main()
 {
     int retCode = 0;
     std::cout << "Initialization Testing of TSG Flying Phasor Tone Generator" << std::endl;
