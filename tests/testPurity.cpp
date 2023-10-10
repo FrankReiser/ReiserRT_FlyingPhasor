@@ -122,7 +122,7 @@ class PhasePurityAnalyzer
 public:
 
     void analyzePhaseStability(const FlyingPhasorElementBufferTypePtr & pBuf, size_t nSamples,
-                               double radiansPerSample, double phi )
+                               double radiansPerSample )
     {
         // Reset stats in case an instance is re-run.
         statsStateMachine.reset();
@@ -295,7 +295,7 @@ int main( int argc, char * argv[] )
     t1 = getClockMonotonic();
 
     std::cout << "************ Legacy Performance Measurements ************" << std::endl;
-    legacyPhasePurityAnalyzer.analyzePhaseStability( pLegacyToneSeries.get(), numSamples, radiansPerSample, phi );
+    legacyPhasePurityAnalyzer.analyzePhaseStability( pLegacyToneSeries.get(), numSamples, radiansPerSample );
     auto legacyPhaseStats = legacyPhasePurityAnalyzer.getStats();
     auto legacyPhaseMinMaxDev = legacyPhasePurityAnalyzer.getMinMaxDev();
     auto legacyPhasePeakAbsDev = std::max(-legacyPhaseMinMaxDev.first, legacyPhaseMinMaxDev.second );
@@ -333,7 +333,7 @@ int main( int argc, char * argv[] )
 #endif
     std::cout << "************ Flying Phasor Performance Measurements ************" << std::endl;
     flyingPhasorPhasePurityAnalyzer.analyzePhaseStability( pFlyingPhasorToneGenSeries.get(), numSamples,
-        radiansPerSample, phi );
+        radiansPerSample );
     auto flyingPhasorPhaseStats = flyingPhasorPhasePurityAnalyzer.getStats();
     auto flyingPhasorPhaseMinMaxDev = flyingPhasorPhasePurityAnalyzer.getMinMaxDev();
     auto flyingPhasorPhasePeakAbsDev = std::max(-flyingPhasorPhaseMinMaxDev.first, flyingPhasorPhaseMinMaxDev.second );
