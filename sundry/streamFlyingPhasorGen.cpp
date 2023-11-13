@@ -120,12 +120,12 @@ int main( int argc, char * argv[] )
                 if ( includeX )
                 {
                     auto sVal = uint32_t( sampleCount++);
-                    std::cout.write(reinterpret_cast< const char * >(&sVal), sizeof( sVal ) );
+                    std::cout.write( reinterpret_cast< const char * >(&sVal), sizeof( sVal ) );
                 }
                 auto fVal = float( p[n].real() );
-                std::cout.write(reinterpret_cast< const char * >(&fVal), sizeof( fVal ) );
+                std::cout.write( reinterpret_cast< const char * >(&fVal), sizeof( fVal ) );
                 fVal = float( p[n].imag() );
-                std::cout.write(reinterpret_cast< const char * >(&fVal), sizeof( fVal ) );
+                std::cout.write( reinterpret_cast< const char * >(&fVal), sizeof( fVal ) );
             }
         }
         else if ( CommandLineParser::StreamFormat::Bin64 == streamFormat )
@@ -135,12 +135,12 @@ int main( int argc, char * argv[] )
                 if ( includeX )
                 {
                     auto sVal = sampleCount++;
-                    std::cout.write(reinterpret_cast< const char * >(&sVal), sizeof( sVal ) );
+                    std::cout.write( reinterpret_cast< const char * >(&sVal), sizeof( sVal ) );
                 }
                 auto fVal = p[n].real();
-                std::cout.write(reinterpret_cast< const char * >(&fVal), sizeof( fVal ) );
+                std::cout.write( reinterpret_cast< const char * >(&fVal), sizeof( fVal ) );
                 fVal = p[n].imag();
-                std::cout.write(reinterpret_cast< const char * >(&fVal), sizeof( fVal ) );
+                std::cout.write( reinterpret_cast< const char * >(&fVal), sizeof( fVal ) );
             }
         }
         std::cout.flush();

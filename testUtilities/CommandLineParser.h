@@ -5,6 +5,8 @@
 
 #include <cmath>
 
+///@todo Support a "Drop first N chunks" feature so we can look further out in time
+
 class CommandLineParser
 {
 public:

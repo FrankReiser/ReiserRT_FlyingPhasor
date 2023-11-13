@@ -24,3 +24,6 @@ target_compile_options( twoToneTest PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 )
+
+# TODO Install the two streaming utilities.
+
