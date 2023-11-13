@@ -1,8 +1,8 @@
-add_executable( streamLegacyGen "" )
-target_sources( streamLegacyGen PRIVATE streamLegacyGen.cpp )
-target_include_directories( streamLegacyGen PUBLIC ../src ../testUtilities )
-target_link_libraries( streamLegacyGen ReiserRT_FlyingPhasor TestUtilities )
-target_compile_options( streamLegacyGen PRIVATE
+add_executable( streamLegacyPhasorGen "" )
+target_sources( streamLegacyPhasorGen PRIVATE streamLegacyPhasorGen.cpp)
+target_include_directories( streamLegacyPhasorGen PUBLIC ../src ../testUtilities )
+target_link_libraries( streamLegacyPhasorGen ReiserRT_FlyingPhasor TestUtilities )
+target_compile_options( streamLegacyPhasorGen PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 )
