@@ -173,24 +173,6 @@ int main( int argc, char * argv[] )
         std::cout.flush();
     }
 
-#if 0
-    // Generate Samples
-    FlyingPhasorElementBufferTypePtr p = pToneSeries.get();
-    for ( size_t n = 0; numSamples != n; ++n )
-    {
-        // Legacy Complex Exponential Equivalent
-        p[n] = exp( j * ( double( n ) * radiansPerSample + phi ) );
-    }
-
-    // Write to standard out. It can be redirected.
-    std::cout << std::scientific;
-    std::cout.precision(17);
-    for ( size_t n = 0; numSamples != n; ++n )
-    {
-        std::cout << p[n].real() << " " << p[n].imag() << std::endl;
-    }
-#endif
-
     exit( 0 );
     return 0;
 }
