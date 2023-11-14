@@ -5,8 +5,6 @@
 
 #include <cmath>
 
-///@todo Support a "Drop first N chunks" feature so we can look further out in time
-
 class CommandLineParser
 {
 public:
@@ -20,6 +18,7 @@ public:
 
     inline unsigned long getChunkSize() const { return chunkSizeIn; }
     inline unsigned long getNumChunks() const { return numChunksIn; }
+    inline unsigned long getSkipChunks() const { return skipChunksIn; }
 
     enum class StreamFormat : short { Invalid=0, Text32, Text64, Bin32, Bin64 };
     StreamFormat getStreamFormat() const { return streamFormatIn; }
@@ -27,12 +26,12 @@ public:
     inline bool getHelpFlag() const { return helpFlagIn; }
     inline bool getIncludeX() const { return includeX_In; }
 
-
 private:
     double radsPerSampleIn{ M_PI / 256 };
     double phaseIn{ 0.0 };
     unsigned long chunkSizeIn{ 4096 };
     unsigned long numChunksIn{ 1 };
+    unsigned long skipChunksIn{ 0 };
     bool helpFlagIn{ false };
     bool includeX_In{ false };
 

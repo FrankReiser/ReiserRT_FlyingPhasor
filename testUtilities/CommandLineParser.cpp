@@ -11,7 +11,7 @@ int CommandLineParser::parseCommandLine( int argc, char * argv[] )
 //    int digitOptIndex = 0;
     int retCode = 0;
 
-    enum eOptions { RadsPerSample=1, Phase, ChunkSize, NumChunks, StreamFormat, Help, IncludeX };
+    enum eOptions { RadsPerSample=1, Phase, ChunkSize, NumChunks, SkipChunks, StreamFormat, Help, IncludeX };
 
     // While options still left to parse
     while (true) {
@@ -22,6 +22,7 @@ int CommandLineParser::parseCommandLine( int argc, char * argv[] )
                 {"phase", required_argument, nullptr, Phase },
                 {"chunkSize", required_argument, nullptr, ChunkSize },
                 {"numChunks", required_argument, nullptr, NumChunks },
+                {"skipChunks", required_argument, nullptr, SkipChunks },
                 {"streamFormatIn", required_argument, nullptr, StreamFormat },
                 {"help", no_argument, nullptr, Help },
                 {"includeX", no_argument, nullptr, IncludeX },
@@ -51,6 +52,10 @@ int CommandLineParser::parseCommandLine( int argc, char * argv[] )
 
             case NumChunks:
                 numChunksIn = std::stoul( optarg );
+                break;
+
+            case SkipChunks:
+                skipChunksIn = std::stoul( optarg );
                 break;
 
             case StreamFormat:

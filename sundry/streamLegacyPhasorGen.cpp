@@ -6,11 +6,11 @@
 
 #include <iostream>
 #include <memory>
+#include <limits>
 
 using namespace ReiserRT::Signal;
 
-void printHelpScreen()
-{
+void printHelpScreen() {
     std::cout << "Usage:" << std::endl;
     std::cout << "    streamLegacyPhasorGen [options]" << std::endl;
     std::cout << "Available Options:" << std::endl;
@@ -26,8 +26,13 @@ void printHelpScreen()
     std::cout << "        The number of samples to produce per chunk. If zero, no samples are produced." << std::endl;
     std::cout << "        Defaults to 4096 radians if unspecified." << std::endl;
     std::cout << "    --numChunks=<uint>" << std::endl;
-    std::cout << "        The number of chunks to generate. If zero, runs continually." << std::endl;
-    std::cout << "        Defaults to 1 radians if unspecified." << std::endl;
+    std::cout << "        The number of chunks to generate. If zero, runs continually up to max uint64 chunks." << std::endl;
+    std::cout << "        This maximum value is inclusive of any skipped chunks." << std::endl;
+    std::cout << "        Defaults to 1 chunk if unspecified." << std::endl;
+    std::cout << "    --skipChunks=<uint>" << std::endl;
+    std::cout << "        The number of chunks to skip before any chunks are output. Does not effect the numChunks output." << std::endl;
+    std::cout << "        In essence if numChunks is 1 and skip chunks is 4, chunk number 5 is the only chunk output." << std::endl;
+    std::cout << "        Defaults to 0 chunks skipped if unspecified." << std::endl;
     std::cout << "    --streamFormat=<string>" << std::endl;
     std::cout << "        t32 - Outputs samples in text format with floating point precision of (9 decimal places)." << std::endl;
     std::cout << "        t64 - Outputs samples in text format with floating point precision (17 decimal places)." << std::endl;
@@ -41,7 +46,7 @@ void printHelpScreen()
     std::cout << "Error Returns:" << std::endl;
     std::cout << "    1 - Command Line Parsing Error - Unrecognized Long Option." << std::endl;
     std::cout << "    2 - Command Line Parsing Error - Unrecognized Short Option (none supported)." << std::endl;
-    std::cout << "    3 - Invalid Stream Format Specified" << std::endl;
+    std::cout << "    3 - Invalid streamFormat specified." << std::endl;
 }
 
 int main( int argc, char * argv[] )
@@ -52,7 +57,7 @@ int main( int argc, char * argv[] )
     auto parseRes = cmdLineParser.parseCommandLine(argc, argv);
     if ( 0 != parseRes )
     {
-        std::cout << "streamFlyingPhasorGen Parse Error: Use command line argument --help for instructions" << std::endl;
+        std::cerr << "streamLegacyPhasorGen Parse Error: Use command line argument --help for instructions" << std::endl;
         exit(parseRes);
     }
 
@@ -62,21 +67,30 @@ int main( int argc, char * argv[] )
         exit( 0 );
     }
 
-    // If one of the text formats, set output precision appropriately
-    auto streamFormat = cmdLineParser.getStreamFormat();
-    if ( CommandLineParser::StreamFormat::Invalid == streamFormat )
-    {
-        std::cout << "streamFlyingPhasorGen Error: Invalid Stream Format Specified. Use --help for instructions" << std::endl;
-        exit( 3 );
-    }
-
     // Get Frequency and Starting Phase
     auto radiansPerSample = cmdLineParser.getRadsPerSample();
     auto phi = cmdLineParser.getPhase();
 
-    // Get Chunk Size and Number of Chunks.
+    // Get the Skip Chunk Count
+    const auto skipChunks = cmdLineParser.getSkipChunks();
+
+    // Get Chunk Size.
     const auto chunkSize = cmdLineParser.getChunkSize();
-    const auto numChunks = cmdLineParser.getNumChunks();
+
+    // Condition Number of Chunks. If it's zero, we set to maximum less skipChunks
+    // because we will incorporate skipChunks into numChunks to simplify logic.
+    auto numChunks = cmdLineParser.getNumChunks();
+    if ( 0 == numChunks )
+        numChunks = std::numeric_limits<decltype( numChunks )>::max() - skipChunks;
+    numChunks += skipChunks;
+
+    // If one of the text formats, set output precision appropriately
+    auto streamFormat = cmdLineParser.getStreamFormat();
+    if ( CommandLineParser::StreamFormat::Invalid == streamFormat )
+    {
+        std::cerr << "streamLegacyPhasorGen Error: Invalid Stream Format Specified. Use --help for instructions" << std::endl;
+        exit( 3 );
+    }
 
     // Allocate Memory for Chunk Size
     std::unique_ptr< FlyingPhasorElementType[] > pToneSeries{ new FlyingPhasorElementType [ chunkSize ] };
@@ -99,8 +113,17 @@ int main( int argc, char * argv[] )
     constexpr FlyingPhasorElementType j{ 0.0, 1.0 };
     FlyingPhasorElementBufferTypePtr p = pToneSeries.get();
     size_t sampleCount = 0;
+    size_t skippedChunks = 0;
     for ( size_t chunk = 0; numChunks != chunk; ++chunk )
     {
+        // Skip this Chunk?
+        if ( skipChunks != skippedChunks )
+        {
+            ++skippedChunks;
+            sampleCount += chunkSize;
+            continue;
+        }
+
         // Get Samples using complex exponential function
         for ( size_t n = 0; chunkSize != n; ++n )
         {
@@ -123,7 +146,7 @@ int main( int argc, char * argv[] )
             {
                 if ( includeX )
                 {
-                    auto sVal = uint32_t( sampleCount++);
+                    auto sVal = uint32_t( sampleCount++ );
                     std::cout.write( reinterpret_cast< const char * >(&sVal), sizeof( sVal ) );
                 }
                 auto fVal = float( p[n].real() );
