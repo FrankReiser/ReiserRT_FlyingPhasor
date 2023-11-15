@@ -23,7 +23,7 @@ int CommandLineParser::parseCommandLine( int argc, char * argv[] )
                 {"chunkSize", required_argument, nullptr, ChunkSize },
                 {"numChunks", required_argument, nullptr, NumChunks },
                 {"skipChunks", required_argument, nullptr, SkipChunks },
-                {"streamFormatIn", required_argument, nullptr, StreamFormat },
+                {"streamFormat", required_argument, nullptr, StreamFormat },
                 {"help", no_argument, nullptr, Help },
                 {"includeX", no_argument, nullptr, IncludeX },
                 {nullptr, 0, nullptr, 0 }

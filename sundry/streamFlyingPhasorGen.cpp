@@ -25,7 +25,7 @@ void printHelpScreen()
     std::cout << "        Defaults to 0.0 radians if unspecified." << std::endl;
     std::cout << "    --chunkSize=<uint>" << std::endl;
     std::cout << "        The number of samples to produce per chunk. If zero, no samples are produced." << std::endl;
-    std::cout << "        Defaults to 4096 radians if unspecified." << std::endl;
+    std::cout << "        Defaults to 4096 samples if unspecified." << std::endl;
     std::cout << "    --numChunks=<uint>" << std::endl;
     std::cout << "        The number of chunks to generate. If zero, runs continually up to max uint64 chunks." << std::endl;
     std::cout << "        This maximum value is inclusive of any skipped chunks." << std::endl;
@@ -41,7 +41,7 @@ void printHelpScreen()
     std::cout << "        b64 - Outputs data in raw binary 64bit precision (uint64 and double), native endian-ness." << std::endl;
     std::cout << "        Defaults to t64 if unspecified." << std::endl;
     std::cout << "    --includeX" << std::endl;
-    std::cout << "        Include sample count in the output stream. This is useful for gnuplot using any format" << std::endl;
+    std::cout << "        Include sample count in the output stream. This is useful for gnuplot using any format." << std::endl;
     std::cout << "        Defaults to no inclusion if unspecified." << std::endl;
     std::cout << std::endl;
     std::cout << "Error Returns:" << std::endl;
@@ -85,7 +85,7 @@ int main( int argc, char * argv[] )
         numChunks = std::numeric_limits<decltype( numChunks )>::max() - skipChunks;
     numChunks += skipChunks;
 
-    // If one of the text formats, set output precision appropriately
+    // Do we have a valid stream output format to use?
     auto streamFormat = cmdLineParser.getStreamFormat();
     if ( CommandLineParser::StreamFormat::Invalid == streamFormat )
     {
