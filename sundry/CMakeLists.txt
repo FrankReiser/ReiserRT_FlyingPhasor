@@ -53,5 +53,4 @@ install(
         TARGETS streamFlyingPhasorGen streamLegacyPhasorGen
         RUNTIME DESTINATION ${INSTALL_BINDIR} COMPONENT bin
 )
-# TODO Install the two streaming utilities.
 
