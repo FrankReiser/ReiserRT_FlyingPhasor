@@ -46,6 +46,8 @@ may be "reset", to produce a different phased tone. Doing so, re-initializes all
 as if the object were just constructed. The amount of state data maintained is fairly small.
 If numerous tones are simultaneously required, instantiate multiple tone generators.
 
+[Figure 1](graphics/figure1.svg)
+
 # Thread Safety
 This tone generator is NOT "thread safe". There are no concurrent access mechanisms
 in place and there is no good reason for addressing this. To the contrary,
