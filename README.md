@@ -29,12 +29,12 @@ we simply preform a complex multiply in rectangular form, the resultant magnitud
 of which may drift away from one. Because of this, a re-normalization cycle must be
 preformed on some periodic basis and this adds to the cost. This tone generator performs
 this re-normalization every other sample. This was chosen for two reasons.
-One, it puts any resultant spur at the Nyquist (edge of bandwidth).
+One, it puts any resultant renormalization spur at the Nyquist rate (edge of bandwidth).
 Two, because at every other sample, the re-normalization required is minimal,
-keeping its noise contribution minimum. Additionally, with such small errors,
+keeping its noise contribution minimum. Additionally, with such small errors at every other cycle,
 a simple and inexpensive linear approximation is all that is required to maintain stability.
 Benchmarking indicates that this tone generator is approximately a factor of 5 times faster
-than the traditional method. Accuracy is such that it is "almost" immeasurably worse.
+than traditional methods. Accuracy is such that it is "almost" immeasurably worse.
 You be the judge. 
 
 Regarding the "state data", this tone generator was designed to generate a single tone per instance.
@@ -46,12 +46,15 @@ may be "reset", to produce a different phased tone. Doing so, re-initializes all
 as if the object were just constructed. The amount of state data maintained is fairly small.
 If numerous tones are simultaneously required, instantiate multiple tone generators.
 
+Figure 1 - Time Series Data
+
 ![Figure 1](graphics/figure1.svg)
+
 
 # Thread Safety
 This tone generator is NOT "thread safe". There are no concurrent access mechanisms
 in place and there is no good reason for addressing this. To the contrary,
-state left by one thread would make no sense to another, never mind the concurrency issues.
+state left by one thread would make little sense to another, never mind the concurrency issues.
 Have threads use their own unique instances.
 
 # Acknowledgements
