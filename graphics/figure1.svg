@@ -260,7 +260,7 @@
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<g transform="translate(283.4,31.0)" stroke="none" fill="black" font-family="Helvetica" font-size="12.00"  text-anchor="middle">
-		<text><tspan font-family="Helvetica" >FlyingPhasor rads/sample=pi/256 , phase=0.0</tspan></text>
+		<text><tspan font-family="Helvetica" >FlyingPhasor rads/sample=pi/256, phase=0.0</tspan></text>
 	</g>
 </g>
 	<g id="gnuplot_plot_1" ><title>real(n)</title>

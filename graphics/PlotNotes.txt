@@ -1,12 +1,13 @@
-# I wrote this so I can remember how I accomplished the graphics in the README
-# incase I ever need to redo them. The project needs to be built and ideally installed
-# before hand.
+# I wrote this, so I can remember how I accomplished the graphics in the README
+# in case I ever need to redo them. The project needs to be built and ideally installed
+# beforehand.
 
-# To Generate the "Sample Series Plot - Figure1" contained in the README file, I used the below command
-# off in some directory outside of the source tree:
+################### FIGURE 1 #######################
+# To Generate the "Figure 1 - Example Flying Phasor Sample Series Data" graphic contained in the README file,
+#  I used the below command off in some directory outside the source tree:
 streamFlyingPhasorGen --includeX --streamFormat=b32 --chunkSize=1024 > flyingPhasorB32.in
 
-# The output binary file contains three binary columnms (sampleNum, real, imaginary) for 1024 samples.
+# The output binary file contains three binary columns (sampleNum, real, imaginary) for 1024 samples.
 # The data is in 32 bit precision and by default has a radians per sample rate of pi/256
 # and a phase of zero. Note that 32 bit precision is more than adequate for a plot.
 
@@ -25,7 +26,7 @@ set grid xtics
 set grid ytics
 set xlabel "Sample Number (n)"
 set ylabel "Amplitude"
-set title "FlyingPhasor rads/sample=pi/256 , phase=0.0"
+set title "FlyingPhasor rads/sample=pi/256, phase=0.0"
 
 # This is one long line, not two lines. Output goes directly to the file 'figure1.svg'.
 plot 'flyingPhasorB32.in' binary format="%uint%float%float" using 1:2 with lines title "real(n)", 'flyingPhasorB32.in' binary format="%uint%float%float" using 1:3 with lines title "imag(n)"
@@ -36,29 +37,67 @@ quit
 # The 'figure1.svg' file was then copied into the projects 'graphics' directory.
 
 
-#################### WORK IN PROGRESS BELOW #######################
 
+################### FIGURE 2 #######################
+# To Generate the "Figure 2 - Example Flying Phasor Power Spectrum Data" graphic contained in the README file,
+# I used the below command off in some directory outside the source tree:
+streamFlyingPhasorGen --streamFormat=b64 --chunkSize=1024 > flyingPhasorB64_NoX.in
 
-# Notes on using 'svg' terminal since 'qt' terminal will not let me set background color. Then must plot in one fell swoop
-set term svg size 520, 360 font "Helvetica,12" background rgb "grey90"
-set output 'figure1.svg'
+# The output binary file contains two binary columns (real, imaginary) for 1024 samples.
+# The data is in 64 bit precision and by default has a radians per sample rate of pi/256
+# and a phase of zero. Note that 64 bit precision is what we want to take an FFT and
+# get a good look at spur free dynamic range.
 
+# Now for the FFT. I used a utility I wrote called 'streamFFT'. I have not published that
+# as of 20231123 yet but intend to do so soon.
 
+# The 'streamFFT' utility always expects 64bit I/Q data as input but, we want 32bit out as this is
+# adequate for plotting. The output binary two binary columns (fractionOfSampleRate, 10log10(mag^2))
+# for 1024 samples. It is essentially a power spectrum in decibels. Note that we did not specify
+# a window for the FFT. This is because we put the signal right on a basis function and using a window
+# would distract our visual spur analysis under this scenario.
+streamFFT --includeX --streamFormat=b32 --chunkSize=1024 < flyingPhasorB64_NoX.in > flyingPhasorFFT_B32.in
 
-# For testing FFT Stream, we need some data.
-# Generate FlyingPhasor output in b64, No X data, 
-~/git/ReiserRT_FlyingPhasor/cmake-build-release/bin/streamFlyingPhasorGen --streamFormat=b64 --chunkSize=1024 > ~/Documents/flyingPhasorB64_NoX.in
-
-~/git/ReiserRT_FFT_Stream/cmake-build-release/bin/streamFFT --includeX --streamFormat=b32 --chunkSize=1024 < flyingPhasorB64_NoX.in > ~/Documents/flyingPhasorFFT_B32.in
+# In the same directory where the file 'flyingPhasorFFT_B32.in' sits, enter gnuplot.
+gnuplot
 
 # Inside gnuplot
+set term svg size 520, 360 font "Helvetica,12" background rgb "grey90"
+set output 'figure2.svg'
 set yrange[-400.0:50]
 set xrange[-0.5:0.5]
 set grid ytics
 set grid xtics
 set xlabel "Frequency (fraction of sample rate)"
 set ylabel "Relative Power (dB)"
+set title "FlyingPhasor rads/sample=pi/256, phase=0.0"
 plot 'flyingPhasorFFT_B32.in' binary format="%float%float" using 1:2 with lines title "Power Spectrum"
-set xrange[-0.05:0.05]
-refresh
 
+
+################### FIGURE 3 #######################
+# To Generate the "Figure 3 - Example Legacy Generator Power Spectrum Data" graphic contained in the README file,
+# I used the below command off in some directory outside the source tree:
+streamLegacyPhasorGen --streamFormat=b64 --chunkSize=1024 > legacyPhasorB64_NoX.in
+
+# The output binary file contains two binary columns (real, imaginary) for 1024 samples.
+# The data is in 64 bit precision and by default has a radians per sample rate of pi/256
+# and a phase of zero. Note that 64 bit precision is what we want to take an FFT and
+# get a good look at spur free dynamic range.
+
+# Take FFT
+streamFFT --includeX --streamFormat=b32 --chunkSize=1024 < legacyPhasorB64_NoX.in > legacyPhasorFFT_B32.in
+
+# In the same directory where the file 'legacyPhasorFFT_B32.in' sits, enter gnuplot.
+gnuplot
+
+# Inside gnuplot
+set term svg size 520, 360 font "Helvetica,12" background rgb "grey90"
+set output 'figure3.svg'
+set yrange[-400.0:50]
+set xrange[-0.5:0.5]
+set grid ytics
+set grid xtics
+set xlabel "Frequency (fraction of sample rate)"
+set ylabel "Relative Power (dB)"
+set title "Legacy Generator rads/sample=pi/256, phase=0.0"
+plot 'legacyPhasorFFT_B32.in' binary format="%float%float" using 1:2 with lines title "Power Spectrum"
