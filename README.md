@@ -71,9 +71,11 @@ Figure 3 - Example Legacy Generator Power Spectrum Data
 
 ![Figure 3](graphics/figure3.svg)
 
-As can be seen, we also have in excess of 300 dB of spur free dynamic range. It would appear that the
-FlyingPhasor generator performs better. Benchmarking indicates that the FlyingPhasor tone generator is 
-approximately a factor of 5 times faster than traditional methods and is comparable in spur free dynamic range.
+As can be seen, the legacy method has in excess of 300 dB of spur free dynamic range as would be
+expected. It also has a slightly tighter skirt than the FlyingPhasor but, this detail is noted
+just ablove our noise floor. The FlyingPhasor generator noise floor actually looks better than
+the legacy method. Benchmarking indicates that the FlyingPhasor tone generator is 
+approximately a factor of 5 times faster than the legacy method and is comparable in spur free dynamic range.
 You be the judge.
 
 # Interface Compatibility
