@@ -1,0 +1,64 @@
+# I wrote this so I can remember how I accomplished the graphics in the README
+# incase I ever need to redo them. The project needs to be built and ideally installed
+# before hand.
+
+# To Generate the "Sample Series Plot - Figure1" contained in the README file, I used the below command
+# off in some directory outside of the source tree:
+streamFlyingPhasorGen --includeX --streamFormat=b32 --chunkSize=1024 > flyingPhasorB32.in
+
+# The output binary file contains three binary columnms (sampleNum, real, imaginary) for 1024 samples.
+# The data is in 32 bit precision and by default has a radians per sample rate of pi/256
+# and a phase of zero. Note that 32 bit precision is more than adequate for a plot.
+
+# In the same directory where the file 'flyingPhasorB32.in' sits, enter gnuplot.
+# You will need gnuplot to be installed obviously to do this.
+gnuplot
+
+# Inside gnuplot
+set term svg size 520, 360 font "Helvetica,12" background rgb "grey90"
+set output 'figure1.svg'
+set xrange [0:1023]
+set yrange [-1.5:1.5]
+set xtics 128
+set ytics 0.5
+set grid xtics
+set grid ytics
+set xlabel "Sample Number (n)"
+set ylabel "Amplitude"
+set title "FlyingPhasor rads/sample=pi/256 , phase=0.0"
+
+# This is one long line, not two lines. Output goes directly to the file 'figure1.svg'.
+plot 'flyingPhasorB32.in' binary format="%uint%float%float" using 1:2 with lines title "real(n)", 'flyingPhasorB32.in' binary format="%uint%float%float" using 1:3 with lines title "imag(n)"
+
+# You can exit gnuplot now
+quit
+
+# The 'figure1.svg' file was then copied into the projects 'graphics' directory.
+
+
+#################### WORK IN PROGRESS BELOW #######################
+
+
+# Notes on using 'svg' terminal since 'qt' terminal will not let me set background color. Then must plot in one fell swoop
+set term svg size 520, 360 font "Helvetica,12" background rgb "grey90"
+set output 'figure1.svg'
+
+
+
+# For testing FFT Stream, we need some data.
+# Generate FlyingPhasor output in b64, No X data, 
+~/git/ReiserRT_FlyingPhasor/cmake-build-release/bin/streamFlyingPhasorGen --streamFormat=b64 --chunkSize=1024 > ~/Documents/flyingPhasorB64_NoX.in
+
+~/git/ReiserRT_FFT_Stream/cmake-build-release/bin/streamFFT --includeX --streamFormat=b32 --chunkSize=1024 < flyingPhasorB64_NoX.in > ~/Documents/flyingPhasorFFT_B32.in
+
+# Inside gnuplot
+set yrange[-400.0:50]
+set xrange[-0.5:0.5]
+set grid ytics
+set grid xtics
+set xlabel "Frequency (fraction of sample rate)"
+set ylabel "Relative Power (dB)"
+plot 'flyingPhasorFFT_B32.in' binary format="%float%float" using 1:2 with lines title "Power Spectrum"
+set xrange[-0.05:0.05]
+refresh
+
