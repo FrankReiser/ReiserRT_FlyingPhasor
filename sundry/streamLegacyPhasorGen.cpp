@@ -10,10 +10,9 @@
 
 using namespace ReiserRT::Signal;
 
-void printHelpScreen()
-{
+void printHelpScreen() {
     std::cout << "Usage:" << std::endl;
-    std::cout << "    streamFlyingPhasorGen [options]" << std::endl;
+    std::cout << "    streamLegacyPhasorGen [options]" << std::endl;
     std::cout << "Available Options:" << std::endl;
     std::cout << "    --help" << std::endl;
     std::cout << "        Displays this help screen and exits." << std::endl;
@@ -41,7 +40,7 @@ void printHelpScreen()
     std::cout << "        b64 - Outputs data in raw binary 64bit precision (uint64 and double), native endian-ness." << std::endl;
     std::cout << "        Defaults to t64 if unspecified." << std::endl;
     std::cout << "    --includeX" << std::endl;
-    std::cout << "        Include sample count in the output stream. This is useful for gnuplot using any format." << std::endl;
+    std::cout << "        Include sample count in the output stream. This is useful for gnuplot using any format" << std::endl;
     std::cout << "        Defaults to no inclusion if unspecified." << std::endl;
     std::cout << std::endl;
     std::cout << "Error Returns:" << std::endl;
@@ -58,7 +57,7 @@ int main( int argc, char * argv[] )
     auto parseRes = cmdLineParser.parseCommandLine(argc, argv);
     if ( 0 != parseRes )
     {
-        std::cerr << "streamFlyingPhasorGen Parse Error: Use command line argument --help for instructions" << std::endl;
+        std::cerr << "streamLegacyPhasorGen Parse Error: Use command line argument --help for instructions" << std::endl;
         exit(parseRes);
     }
 
@@ -85,19 +84,16 @@ int main( int argc, char * argv[] )
         numChunks = std::numeric_limits<decltype( numChunks )>::max() - skipChunks;
     numChunks += skipChunks;
 
-    // Do we have a valid stream output format to use?
+    // If one of the text formats, set output precision appropriately
     auto streamFormat = cmdLineParser.getStreamFormat();
     if ( CommandLineParser::StreamFormat::Invalid == streamFormat )
     {
-        std::cerr << "streamFlyingPhasorGen Error: Invalid Stream Format Specified. Use --help for instructions" << std::endl;
+        std::cerr << "streamLegacyPhasorGen Error: Invalid Stream Format Specified. Use --help for instructions" << std::endl;
         exit( 3 );
     }
 
-    // Instantiate a FlyingPhasor
-    FlyingPhasorToneGenerator flyingPhasorToneGenerator{ radiansPerSample, phi };
-
     // Allocate Memory for Chunk Size
-    std::unique_ptr< FlyingPhasorElementType[] > pToneSeries{new FlyingPhasorElementType [ chunkSize ] };
+    std::unique_ptr< FlyingPhasorElementType[] > pToneSeries{ new FlyingPhasorElementType [ chunkSize ] };
 
     // If we are using a text stream format, set the output precision
     if ( CommandLineParser::StreamFormat::Text32 == streamFormat)
@@ -114,15 +110,12 @@ int main( int argc, char * argv[] )
     // Are we including Sample count in the output?
     auto includeX = cmdLineParser.getIncludeX();
 
+    constexpr FlyingPhasorElementType j{ 0.0, 1.0 };
     FlyingPhasorElementBufferTypePtr p = pToneSeries.get();
     size_t sampleCount = 0;
     size_t skippedChunks = 0;
     for ( size_t chunk = 0; numChunks != chunk; ++chunk )
     {
-        // Get Samples. If we are skipping chunks, we may not output, but we must
-        // maintain flying phasor state.
-        flyingPhasorToneGenerator.getSamples( p, chunkSize );
-
         // Skip this Chunk?
         if ( skipChunks != skippedChunks )
         {
@@ -131,8 +124,15 @@ int main( int argc, char * argv[] )
             continue;
         }
 
+        // Get Samples using complex exponential function
+        for ( size_t n = 0; chunkSize != n; ++n )
+        {
+            // Legacy Complex Exponential Equivalent
+            p[n] = std::exp( j * ( double( chunkSize * chunk + n ) * radiansPerSample + phi ) );
+        }
+
         if ( CommandLineParser::StreamFormat::Text32 == streamFormat ||
-            CommandLineParser::StreamFormat::Text64 == streamFormat )
+             CommandLineParser::StreamFormat::Text64 == streamFormat )
         {
             for ( size_t n = 0; chunkSize != n; ++n )
             {
@@ -146,7 +146,7 @@ int main( int argc, char * argv[] )
             {
                 if ( includeX )
                 {
-                    auto sVal = uint32_t( sampleCount++);
+                    auto sVal = uint32_t( sampleCount++ );
                     std::cout.write( reinterpret_cast< const char * >(&sVal), sizeof( sVal ) );
                 }
                 auto fVal = float( p[n].real() );
