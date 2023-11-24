@@ -29,7 +29,8 @@ void FlyingPhasorToneGenerator::getSamples( FlyingPhasorElementBufferTypePtr pEl
         // Now advance (rotate) the phasor by our rate (complex multiply)
         phasor *= rate;
 
-        // Perform normalization
+        // Perform normalization work. This only actually normalized ever other invocation.
+        // We invoke it to maintain that part of the state machine.
         normalize();
     }
 }
@@ -46,7 +47,8 @@ void FlyingPhasorToneGenerator::getSamplesScaled( FlyingPhasorElementBufferTypeP
         // Now advance (rotate) the phasor by our rate (complex multiply)
         phasor *= rate;
 
-        // Perform normalization
+        // Perform normalization work. This only actually normalized ever other invocation.
+        // We invoke it to maintain that part of the state machine.
         normalize();
     }
 }
@@ -63,7 +65,8 @@ void FlyingPhasorToneGenerator::getSamplesScaled( FlyingPhasorElementBufferTypeP
         // Now advance (rotate) the phasor by our rate (complex multiply)
         phasor *= rate;
 
-        // Perform normalization
+        // Perform normalization work. This only actually normalized ever other invocation.
+        // We invoke it to maintain that part of the state machine.
         normalize();
     }
 }
@@ -79,7 +82,8 @@ void FlyingPhasorToneGenerator::accumSamples( FlyingPhasorElementBufferTypePtr p
         // Now advance (rotate) the phasor by our rate (complex multiply)
         phasor *= rate;
 
-        // Perform normalization
+        // Perform normalization work. This only actually normalized ever other invocation.
+        // We invoke it to maintain that part of the state machine.
         normalize();
     }
 }
@@ -96,7 +100,8 @@ void FlyingPhasorToneGenerator::accumSamplesScaled( FlyingPhasorElementBufferTyp
         // Now advance (rotate) the phasor by our rate (complex multiply)
         phasor *= rate;
 
-        // Perform normalization
+        // Perform normalization work. This only actually normalized ever other invocation.
+        // We invoke it to maintain that part of the state machine.
         normalize();
     }
 }
@@ -113,7 +118,8 @@ void FlyingPhasorToneGenerator::accumSamplesScaled( FlyingPhasorElementBufferTyp
         // Now advance (rotate) the phasor by our rate (complex multiply)
         phasor *= rate;
 
-        // Perform normalization
+        // Perform normalization work. This only actually normalized ever other invocation.
+        // We invoke it to maintain that part of the state machine.
         normalize();
     }
 }
@@ -134,7 +140,8 @@ FlyingPhasorElementType FlyingPhasorToneGenerator::getSample()
     // Now advance (rotate) the phasor by our rate (complex multiply)
     phasor *= rate;
 
-    // Perform normalization
+    // Perform normalization work. This only actually normalized ever other invocation.
+    // We invoke it to maintain that part of the state machine.
     normalize();
 
     return retValue;
