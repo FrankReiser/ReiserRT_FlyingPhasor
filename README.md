@@ -6,7 +6,7 @@ Frank Reiser's C++11 implementation of a fast and accurate, sin/cos waveform pai
 This tone generator evolved out of a desire to generate complex exponential waveforms (sinusoids) fast and accurate.
 The traditional way of doing this, involved repeated calls to sin and cos functions with an advancing,
 radian input argument. This produces accurate results, at least over a limited domain interval.
-However, it is computationally intensive, not very fast, and subject to domain range issues.
+However, it is computationally intensive (not fast), and subject to domain range issues.
 
 If a continual sequence of complex values are what is required for an application.
 The task of generating this sequence can be accomplished by simply rotating a phasor around the unit circle.
@@ -63,7 +63,7 @@ Figure 2 - Example Flying Phasor Power Spectrum Data
 ![Figure 2](graphics/figure2.svg)
 
 As can be seen, we have in excess of 300 dB of spur free dynamic range. This seems phenomenal but, how
-does this compare to the legacy method? In order to compare, we use utility 'streamFlyingPhasorGen'
+does this compare to the legacy method? In order to compare, we use utility 'streamLegacyPhasorGen'
 program included with the project, using the same parameters.
 This data is plotted below:
 
@@ -71,12 +71,13 @@ Figure 3 - Example Legacy Generator Power Spectrum Data
 
 ![Figure 3](graphics/figure3.svg)
 
-As can be seen, the legacy method has in excess of 300 dB of spur free dynamic range as would be
-expected. It also has a slightly tighter skirt than the FlyingPhasor but, this detail is noted
-just above our noise floor. The FlyingPhasor generator noise floor actually looks better than
-the legacy method. Benchmarking indicates that the FlyingPhasor tone generator is 
-approximately a factor of 5 times faster than the legacy method and is comparable in spur free dynamic range.
-You be the judge.
+The legacy method also has in excess of 300 dB of spur free dynamic range as would be
+expected. It has a slightly tighter skirt than the FlyingPhasor but, the FlyingPhasor skirt
+is reasonably within the noise floor of the legacy method. The FlyingPhasor generator noise floor actually
+looks better than the legacy method. It is more uniformly distributed across the spectrum.
+It also lacks the periodic spurs seen in the legacy method. 
+Benchmarking indicates that the FlyingPhasor tone generator is approximately a factor of 5 times
+faster than the legacy method and is comparable in spur free dynamic range. You be the judge.
 
 # Interface Compatibility
 This component has been tested to be interface-able with C++20 compiles. Note that the compiled library code
@@ -114,3 +115,5 @@ Roughly as follows:
    ```
    sudo cmake --install .
    ```
+Please see the "tests" and "sundry" folders for examples on how to use the FlyingPhasor in
+your own projects.

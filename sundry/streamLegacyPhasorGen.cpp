@@ -128,7 +128,7 @@ int main( int argc, char * argv[] )
         for ( size_t n = 0; chunkSize != n; ++n )
         {
             // Legacy Complex Exponential Equivalent
-            p[n] = exp( j * ( double( chunkSize * chunk + n ) * radiansPerSample + phi ) );
+            p[n] = std::exp( j * ( double( chunkSize * chunk + n ) * radiansPerSample + phi ) );
         }
 
         if ( CommandLineParser::StreamFormat::Text32 == streamFormat ||
