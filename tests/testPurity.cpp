@@ -290,7 +290,7 @@ int main( int argc, char * argv[] )
     for ( size_t n = 0; numSamples != n; ++n )
     {
         // Complex Exponential
-        p[n] = exp( j * ( double( n ) * radiansPerSample + phi ) );
+        p[n] = std::exp( j * ( double( n ) * radiansPerSample + phi ) );
     }
     t1 = getClockMonotonic();
 
@@ -353,7 +353,6 @@ int main( int argc, char * argv[] )
     std::cout << "Performance for numSamples: " << numSamples
               << " is " << flyingPhasorMagDeltaT << " seconds." << std::endl;
 
-
     // Now for the Validating.
     // NOTE: We are not going to "Validate" performance of the Legacy Generator. It is very good, just slow.
     // Good up to some extremely high number of samples anyway.
@@ -415,7 +414,6 @@ int main( int argc, char * argv[] )
         }
 
     } while (false);
-
 
     exit( retCode );
     return retCode;
