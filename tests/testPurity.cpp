@@ -290,7 +290,7 @@ int main( int argc, char * argv[] )
     for ( size_t n = 0; numSamples != n; ++n )
     {
         // Complex Exponential
-        p[n] = exp( j * ( double( n ) * radiansPerSample + phi ) );
+        p[n] = std::exp( j * ( double( n ) * radiansPerSample + phi ) );
     }
     t1 = getClockMonotonic();
 
