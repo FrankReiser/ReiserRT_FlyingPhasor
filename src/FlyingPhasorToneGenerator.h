@@ -51,7 +51,7 @@ namespace ReiserRT
              * This operation constructs a FlyingPhasorToneGenerator instance.
              *
              * @param radiansPerSample The number of radians to advance each sample (synonymous with frequency).
-             * @param phi The initial phase of the state phasor.
+             * @param phi The initial phase of the state phasor in radians.
              */
             explicit FlyingPhasorToneGenerator( double radiansPerSample=0.0, double phi=0.0 );
 
@@ -139,11 +139,13 @@ namespace ReiserRT
             /**
              * @brief Reset Operation
              *
-             * This operation resets an instance to a known state. This is simply
-             * an instantaneous phase and a fixed frequency in radians per sample.
+             * This operation resets an instance to a known state. It sets
+             * an instantaneous phase, a fixed frequency in radians per sample
+             * and, zeroes out of the sampleCounter. Object state is as if the object had just been
+             * constructed with the same parameters.
              *
              * @param radiansPerSample The number of radians to advance each sample (synonymous with frequency).
-             * @param phi The initial phase of the state phasor.
+             * @param phi The initial phase of the state phasor in radians.
              */
             void reset( double radiansPerSample=0.0, double phi=0.0 );
 
