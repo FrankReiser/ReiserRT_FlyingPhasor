@@ -168,12 +168,12 @@ namespace ReiserRT
             FlyingPhasorElementType getSample();
 
             /**
-             * @brief Peak Next Sample
+             * @brief Peek Next Sample
              *
              * This operation exists for uses cases, where querying the current phase of an instance is necessary
              * without 'working' the machine. The phasor state remains unchanged.
              */
-             inline const FlyingPhasorElementType & peakNextSample() const { return phasor; }
+             inline const FlyingPhasorElementType & peekNextSample() const { return phasor; }
 
         private:
             /**
