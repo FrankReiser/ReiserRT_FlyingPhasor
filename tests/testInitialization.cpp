@@ -26,7 +26,7 @@ int main()
 
     do {
         // A small buffer for storing two elements
-        std::unique_ptr< FlyingPhasorElementType[] > pElementBuf{new FlyingPhasorElementType [2] };
+        std::unique_ptr< FlyingPhasorElementType[] > pElementBuf{new FlyingPhasorElementType[2] };
 
         // Instantiate Default Complex Tone Generator (Defaults => 0.0 radsPerSample, 0.0 phi = pure DC)
         {
