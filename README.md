@@ -63,8 +63,8 @@ Figure 2 - Example Flying Phasor Power Spectrum Data
 ![Figure 2](graphics/figure2.svg)
 
 As can be seen, we have in excess of 300 dB of spur free dynamic range. This seems phenomenal but, how
-does this compare to the legacy method? In order to compare, we use utility 'streamLegacyPhasorGen'
-program included with the project, using the same parameters.
+does this compare to the legacy method? In order to compare, we will use the 'streamLegacyPhasorGen'
+utility program included with the project, using the same parameters.
 This data is plotted below:
 
 Figure 3 - Example Legacy Generator Power Spectrum Data
