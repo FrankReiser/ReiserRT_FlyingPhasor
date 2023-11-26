@@ -210,5 +210,4 @@ namespace ReiserRT
     }
 }
 
-
 #endif //REISER_RT_FLYING_PHASOR_H
