@@ -63,8 +63,8 @@ Figure 2 - Example Flying Phasor Power Spectrum Data
 ![Figure 2](graphics/figure2.svg)
 
 As can be seen, we have in excess of 300 dB of spur free dynamic range. This seems phenomenal but, how
-does this compare to the legacy method? In order to compare, we use utility 'streamLegacyPhasorGen'
-program included with the project, using the same parameters.
+does this compare to the legacy method? In order to compare, we will use the 'streamLegacyPhasorGen'
+utility program included with the project, using the same parameters.
 This data is plotted below:
 
 Figure 3 - Example Legacy Generator Power Spectrum Data
@@ -83,6 +83,10 @@ faster than the legacy method and is comparable in spur free dynamic range. You 
 This component has been tested to be interface-able with C++20 compiles. Note that the compiled library code
 is built using the c++11 standard. API/ABI stability will be maintained between minor versions of this project. 
 
+# Dependencies
+This component has no dependencies other than those of C++11 standard library and "threads/pthreads" which 
+should be including in all Linux distributions.
+
 # Thread Safety
 This tone generator is not "thread safe". There are no concurrent access mechanisms
 in place and there is no good reason for addressing this. To the contrary,
@@ -96,8 +100,10 @@ What I have done is to actually utilize std::complex instead of a discrete reimp
 of complex math, fine honed the re-normalization period, and turned it into a reusable object that
 meets my needs. Also, I provide some test harnesses that prove its worthiness. 
 
-## Building and Installation
-Roughly as follows:
+# Building and Installation
+This project requires cmake version 3.15 or higher. The procedure for configuring and building is
+roughly as follows:
+
 1) Obtain a copy of the project
 2) Create a build folder within the project root folder.
 3) Switch directory to the build folder and run the following
@@ -117,3 +123,4 @@ Roughly as follows:
    ```
 Please see the "tests" and "sundry" folders for examples on how to use the FlyingPhasor in
 your own projects.
+

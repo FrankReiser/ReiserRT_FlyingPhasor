@@ -270,7 +270,7 @@ int main( int argc, char * argv[] )
     std::unique_ptr< FlyingPhasorElementType[] > pFlyingPhasorToneGenSeries{new FlyingPhasorElementType [ maxSamples] };
 
     // Instantiate the FlyingPhasorToneGenerator. This is what we are testing the purity of as compared to legacy methods.
-    std::unique_ptr< FlyingPhasorToneGenerator > pFlyingPhasorToneGen{ new FlyingPhasorToneGenerator{ radiansPerSample, phi } };
+    FlyingPhasorToneGenerator flyingPhasorToneGenerator{ radiansPerSample, phi };
 
     // Phase and Magnitude Purity Analyzers for each "FlyingPhasor" and "Legacy" tone generators.
     PhasePurityAnalyzer legacyPhasePurityAnalyzer{};
@@ -319,7 +319,7 @@ int main( int argc, char * argv[] )
 
     t0 = getClockMonotonic();
     p = pFlyingPhasorToneGenSeries.get();
-    pFlyingPhasorToneGen->getSamples( p, numSamples );
+    flyingPhasorToneGenerator.getSamples( p, numSamples );
     t1 = getClockMonotonic();
 
 #if 0
